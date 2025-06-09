@@ -1,23 +1,28 @@
 
 "use client";
 
-import { useEffect, useState }
-from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Smile, BarChart3, MessageCircle } from 'lucide-react';
+import { Smile, BarChart3, MessageCircle, FileText } from 'lucide-react';
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
+  const [intakeDataExists, setIntakeDataExists] = useState<boolean | null>(null);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('wellspringUserEmail');
     if (storedEmail) {
-      // Simple name extraction (e.g., from 'user@example.com' to 'user')
       setUserName(storedEmail.split('@')[0]);
     }
+    if (localStorage.getItem('wellspringUserIntakeData')) {
+      setIntakeDataExists(true);
+    } else {
+      setIntakeDataExists(false);
+    }
   }, []);
+
 
   return (
     <div className="space-y-8">
@@ -36,6 +41,20 @@ export default function DashboardPage() {
           </p>
         </CardContent>
       </Card>
+
+      {intakeDataExists === false && (
+         <Card className="border-primary border-2 shadow-lg">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl"><FileText className="h-6 w-6 text-primary" />Complete Your Profile</CardTitle>
+            <CardDescription>Help us personalize your experience by completing the initial intake form. This will enable tailored insights and support.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Button asChild>
+                <Link href="/dashboard/intake">Go to Intake Form</Link>
+            </Button>
+            </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:shadow-xl transition-shadow duration-300">
@@ -82,21 +101,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Placeholder for Initial Intake Form if not completed */}
-      {/* 
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete Your Profile</CardTitle>
-          <CardDescription>Help us personalize your experience by completing the initial intake form.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild>
-            <Link href="/dashboard/intake">Go to Intake Form</Link>
-          </Button>
-        </CardContent>
-      </Card>
-      */}
     </div>
   );
 }
+
+    

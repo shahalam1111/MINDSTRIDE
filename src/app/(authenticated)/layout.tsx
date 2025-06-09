@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus } from 'lucide-react';
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -67,7 +67,9 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const handleLogout = () => {
     localStorage.removeItem('wellspringUserLoggedIn');
     localStorage.removeItem('wellspringUserEmail');
-    setIsAuthenticated(false); // Update state immediately for UI responsiveness
+    localStorage.removeItem('wellspringUserIntakeData'); // Clear intake data on logout
+    localStorage.removeItem('wellspringUserMoodLog'); // Clear mood log on logout
+    setIsAuthenticated(false); 
     router.replace('/');
   };
   
@@ -75,9 +77,8 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/dashboard/intake", icon: FileText, label: "Intake Form" },
     { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
-    // Add more items here like:
-    // { href: "/dashboard/chat", icon: MessageCircle, label: "AI Chat" },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },
     // { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
@@ -165,8 +166,11 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{userEmail || "My Account"}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/dashboard/intake')}>Intake Form</DropdownMenuItem>
+              {/* 
+                <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>Profile</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>Settings</DropdownMenuItem>
+              */}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
@@ -180,3 +184,5 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     </div>
   );
 }
+
+    
