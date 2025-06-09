@@ -152,7 +152,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[525px] md:max-w-[600px] lg:max-w-[700px] h-[70vh] flex flex-col p-0">
+        <DialogContent className="w-11/12 max-w-4xl h-[85vh] flex flex-col p-0">
           <DialogHeader className="p-4 pb-2 border-b flex flex-row justify-between items-center">
             <div>
               <DialogTitle className="text-xl font-headline">AI Chat Assistant</DialogTitle>
