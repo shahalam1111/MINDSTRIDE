@@ -30,17 +30,16 @@ interface NavItemProps {
 }
 
 const NavItem = ({ href, icon: Icon, label, currentPath, onClick }: NavItemProps) => (
-  <Link href={href} passHref legacyBehavior>
-    <a
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:text-primary hover:bg-muted",
-        currentPath === href ? "bg-primary text-primary-foreground hover:text-primary-foreground" : ""
-      )}
-    >
-      <Icon className="h-5 w-5" />
-      {label}
-    </a>
+  <Link
+    href={href}
+    onClick={onClick}
+    className={cn(
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:text-primary hover:bg-muted",
+      currentPath === href ? "bg-primary text-primary-foreground hover:text-primary-foreground" : ""
+    )}
+  >
+    <Icon className="h-5 w-5" />
+    {label}
   </Link>
 );
 
