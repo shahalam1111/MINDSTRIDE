@@ -18,61 +18,82 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'] as const;
+const TIMEZONE_OPTIONS = [
+  'Eastern Time (EST)', 'Central Time (CST)', 'Mountain Time (MST)', 'Pacific Time (PST)',
+  'Greenwich Mean Time (GMT)', 'Central European Time (CET)', 'Japan Standard Time (JST)', 'India Standard Time (IST)'
+] as const;
 const DIAGNOSIS_HISTORY_OPTIONS = ['Yes', 'No', 'Prefer not to say'] as const;
+const DIAGNOSES_CHECKBOX_OPTIONS = [
+  { id: 'anxiety', label: 'Anxiety' },
+  { id: 'depression', label: 'Depression' },
+  { id: 'ptsd', label: 'PTSD' },
+  { id: 'ocd', label: 'OCD' },
+  { id: 'adhd', label: 'ADHD' },
+  { id: 'bipolar', label: 'Bipolar Disorder' },
+  { id: 'other', label: 'Other' },
+] as const;
 const CURRENT_TREATMENT_OPTIONS = ['Yes', 'No', 'Prefer not to say'] as const;
+const EXERCISE_FREQUENCY_OPTIONS = [
+  'None', '1-2 times per week', '3-4 times per week', '5-6 times per week', 'Daily'
+] as const;
 const SUBSTANCE_USE_OPTIONS = ['Yes often', 'Occasionally', 'No'] as const;
+const TODAY_MOOD_OPTIONS = [
+  { emoji: '😊', label: 'Happy' },
+  { emoji: '😐', label: 'Neutral' },
+  { emoji: '😞', label: 'Sad' },
+  { emoji: '😠', label: 'Angry' },
+  { emoji: '😰', label: 'Anxious' },
+  { emoji: '😴', label: 'Tired' },
+] as const;
 const CHECKIN_FREQUENCY_OPTIONS = ['Daily', 'Weekly', 'Only when I ask'] as const;
 const PREFERRED_TIME_OPTIONS = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
 
 const frequentEmotionsOptions = [
-  { id: 'happy', label: 'Happy' },
-  { id: 'sad', label: 'Sad' },
-  { id: 'anxious', label: 'Anxious' },
-  { id: 'angry', label: 'Angry' },
-  { id: 'calm', label: 'Calm' },
-  { id: 'stressed', label: 'Stressed' },
-  { id: 'overwhelmed', label: 'Overwhelmed' },
-  { id: 'hopeful', label: 'Hopeful' },
+  { id: 'happy', label: 'Happy' }, { id: 'sad', label: 'Sad' }, { id: 'anxious', label: 'Anxious' },
+  { id: 'angry', label: 'Angry' }, { id: 'calm', label: 'Calm' }, { id: 'stressed', label: 'Stressed' },
+  { id: 'overwhelmed', label: 'Overwhelmed' }, { id: 'hopeful', label: 'Hopeful' },
 ];
-
 const supportAreasOptions = [
-  { id: 'stress', label: 'Managing Stress' },
-  { id: 'sleep', label: 'Improving Sleep' },
-  { id: 'habits', label: 'Building Better Habits' },
-  { id: 'relationships', label: 'Relationship Issues' },
-  { id: 'anxiety', label: 'Coping with Anxiety' },
-  { id: 'emotions', label: 'Understanding Emotions' },
+  { id: 'stress', label: 'Managing Stress' }, { id: 'sleep', label: 'Improving Sleep' },
+  { id: 'habits', label: 'Building Better Habits' }, { id: 'relationships', label: 'Relationship Issues' },
+  { id: 'anxiety', label: 'Coping with Anxiety' }, { id: 'emotions', label: 'Understanding Emotions' },
   { id: 'motivation', label: 'Motivation' },
 ];
-
 const contentPreferencesOptions = [
-  { id: 'articles', label: 'Text Articles' },
-  { id: 'meditations', label: 'Guided Meditations' },
-  { id: 'videos', label: 'Video Content' },
-  { id: 'exercises', label: 'Interactive Exercises' },
+  { id: 'articles', label: 'Text Articles' }, { id: 'meditations', label: 'Guided Meditations' },
+  { id: 'videos', label: 'Video Content' }, { id: 'exercises', label: 'Interactive Exercises' },
   { id: 'audio', label: 'Audio Talks' },
 ];
-
 
 const intakeFormSchema = z.object({
   fullName: z.string().optional(),
   age: z.coerce.number().min(18, { message: "You must be at least 18 years old." }),
   gender: z.enum(GENDERS),
-  location: z.string().min(1, { message: "Location is required." }),
+  city: z.string().min(1, { message: "City is required." }),
+  timezone: z.enum(TIMEZONE_OPTIONS),
   diagnosisHistory: z.enum(DIAGNOSIS_HISTORY_OPTIONS),
-  diagnoses: z.string().optional(), // Comma-separated for textarea, will be processed
+  diagnoses: z.array(z.string()).optional(),
+  otherDiagnosis: z.string().optional(),
   currentTreatment: z.enum(CURRENT_TREATMENT_OPTIONS),
-  sleepPatterns: z.coerce.number().min(0, { message: "Sleep hours cannot be negative." }).max(24, { message: "Sleep hours cannot exceed 24." }),
-  exerciseFrequency: z.coerce.number().min(0, { message: "Exercise frequency cannot be negative." }),
+  sleepPatterns: z.coerce.number().min(3).max(12),
+  exerciseFrequency: z.enum(EXERCISE_FREQUENCY_OPTIONS),
   substanceUse: z.enum(SUBSTANCE_USE_OPTIONS),
   currentStressLevel: z.number().min(1).max(10),
-  todayMood: z.string().min(1, { message: "Please describe your mood." }), // Emoji or short description
+  todayMood: z.string().min(1, { message: "Please select your mood." }),
   frequentEmotions: z.array(z.string()).refine(value => value.some(item => item), { message: "You have to select at least one emotion." }),
   supportAreas: z.array(z.string()).refine(value => value.some(item => item), { message: "You have to select at least one support area." }),
   contentPreferences: z.array(z.string()).refine(value => value.some(item => item), { message: "You have to select at least one content preference." }),
   checkInFrequency: z.enum(CHECKIN_FREQUENCY_OPTIONS),
   preferredTime: z.enum(PREFERRED_TIME_OPTIONS),
   additionalInformation: z.string().optional(),
+}).refine(data => {
+  if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other') && !data.otherDiagnosis?.trim()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please specify your diagnosis if 'Other' is selected.",
+  path: ['otherDiagnosis'],
 });
 
 type IntakeFormValues = z.infer<typeof intakeFormSchema>;
@@ -87,12 +108,14 @@ export default function IntakeFormPage() {
       fullName: '',
       age: 18,
       gender: 'Prefer not to say',
-      location: '',
+      city: '',
+      timezone: TIMEZONE_OPTIONS[3], // Default to Pacific Time
       diagnosisHistory: 'Prefer not to say',
-      diagnoses: '',
+      diagnoses: [],
+      otherDiagnosis: '',
       currentTreatment: 'Prefer not to say',
       sleepPatterns: 7,
-      exerciseFrequency: 2,
+      exerciseFrequency: '1-2 times per week',
       substanceUse: 'No',
       currentStressLevel: 5,
       todayMood: '',
@@ -106,21 +129,38 @@ export default function IntakeFormPage() {
   });
 
   const diagnosisHistoryValue = form.watch('diagnosisHistory');
+  const diagnosesValue = form.watch('diagnoses');
+  const selectedTodayMood = form.watch('todayMood');
 
   const onSubmit = (data: IntakeFormValues) => {
     try {
+      let finalDiagnoses: string[] = data.diagnoses || [];
+      if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other')) {
+        finalDiagnoses = finalDiagnoses.filter(d => d !== 'other');
+        if (data.otherDiagnosis?.trim()) {
+          finalDiagnoses.push(data.otherDiagnosis.trim());
+        }
+      }
+      
       const processedData = {
         ...data,
-        // Process diagnoses string into an array if needed by backend, or keep as string
-        diagnoses: data.diagnoses ? data.diagnoses.split(',').map(d => d.trim()).filter(d => d) : [],
+        location: `${data.city}, ${data.timezone}`,
+        diagnoses: finalDiagnoses,
+        // Ensure numeric fields that might come from coerce are numbers
+        age: Number(data.age),
+        sleepPatterns: Number(data.sleepPatterns),
+        currentStressLevel: Number(data.currentStressLevel),
       };
-      localStorage.setItem('wellspringUserIntakeData', JSON.stringify(processedData));
-      console.log("Intake Form Data:", processedData);
+      // remove city and timezone as they are combined into location
+      const { city, timezone, otherDiagnosis, ...payloadToStore } = processedData;
+
+
+      localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStore));
+      console.log("Intake Form Data:", payloadToStore);
       toast({
         title: "Intake Form Submitted",
         description: "Your information has been saved. We'll use this to personalize your experience.",
       });
-      // Optionally, redirect or update UI
       router.push('/dashboard');
     } catch (error) {
       console.error("Failed to save intake form:", error);
@@ -174,13 +214,27 @@ export default function IntakeFormPage() {
                 </FormItem>
               )}/>
 
-              <FormField control={form.control} name="location" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location (City and Timezone)</FormLabel>
-                  <FormControl><Input placeholder="e.g., San Francisco, PST" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}/>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="city" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl><Input placeholder="e.g., San Francisco" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={form.control} name="timezone" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Timezone</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Select your timezone" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {TIMEZONE_OPTIONS.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+              </div>
 
               <FormField control={form.control} name="diagnosisHistory" render={({ field }) => (
                 <FormItem className="space-y-3">
@@ -200,14 +254,50 @@ export default function IntakeFormPage() {
               )}/>
 
               {diagnosisHistoryValue === 'Yes' && (
-                <FormField control={form.control} name="diagnoses" render={({ field }) => (
+                <FormField control={form.control} name="diagnoses" render={() => (
                   <FormItem>
-                    <FormLabel>Please list any diagnoses (comma-separated)</FormLabel>
-                    <FormControl><Textarea placeholder="e.g., Anxiety, Depression" {...field} rows={3} /></FormControl>
+                    <FormLabel>Please select any conditions you've been diagnosed with:</FormLabel>
+                    <FormDescription>Select all that apply.</FormDescription>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                      {DIAGNOSES_CHECKBOX_OPTIONS.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="diagnoses"
+                          render={({ field }) => {
+                            return (
+                              <FormItem key={item.id} className="flex flex-row items-center space-x-3 space-y-0 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), item.id])
+                                        : field.onChange((field.value || []).filter((value) => value !== item.id));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer">{item.label}</FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
                     <FormMessage />
+                    {diagnosesValue?.includes('other') && (
+                      <FormField control={form.control} name="otherDiagnosis" render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>If "Other", please specify:</FormLabel>
+                          <FormControl><Input placeholder="Specify other diagnosis" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}/>
+                    )}
                   </FormItem>
                 )}/>
               )}
+
 
               <FormField control={form.control} name="currentTreatment" render={({ field }) => (
                 <FormItem className="space-y-3">
@@ -225,11 +315,21 @@ export default function IntakeFormPage() {
                   <FormMessage />
                 </FormItem>
               )}/>
-
+              
               <FormField control={form.control} name="sleepPatterns" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Average hours of sleep per night</FormLabel>
-                  <FormControl><Input type="number" placeholder="e.g., 7" {...field} /></FormControl>
+                  <FormLabel>Average hours of sleep per night (3-12 hours)</FormLabel>
+                   <FormControl>
+                    <div className="flex items-center space-x-4 pt-2">
+                       <Slider
+                          defaultValue={[field.value]}
+                          min={3} max={12} step={1}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className="w-[90%]"
+                        />
+                        <span className="w-[10%] text-center text-lg font-semibold">{field.value}</span>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -237,7 +337,12 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="exerciseFrequency" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Weekly exercise sessions (approx.)</FormLabel>
-                  <FormControl><Input type="number" placeholder="e.g., 3" {...field} /></FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {EXERCISE_FREQUENCY_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -259,7 +364,7 @@ export default function IntakeFormPage() {
                 <FormItem>
                   <FormLabel>Current Stress Level (1: Low, 10: High)</FormLabel>
                   <FormControl>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 pt-2">
                        <Slider
                           defaultValue={[field.value]}
                           min={1} max={10} step={1}
@@ -275,8 +380,23 @@ export default function IntakeFormPage() {
 
               <FormField control={form.control} name="todayMood" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>How are you feeling today? (e.g., emoji or a word)</FormLabel>
-                  <FormControl><Input placeholder="e.g., 😊 or Okay" {...field} /></FormControl>
+                  <FormLabel>How are you feeling today?</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {TODAY_MOOD_OPTIONS.map(mood => (
+                        <Button
+                          key={mood.emoji}
+                          type="button"
+                          variant={selectedTodayMood === mood.emoji ? 'default' : 'outline'}
+                          onClick={() => field.onChange(mood.emoji)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-base"
+                        >
+                          <span className="text-2xl">{mood.emoji}</span>
+                          {mood.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -427,5 +547,3 @@ export default function IntakeFormPage() {
     </div>
   );
 }
-
-    

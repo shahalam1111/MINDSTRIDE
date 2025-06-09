@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Analyzes the user's initial intake form data to identify key areas of concern and potential support needs.
@@ -10,6 +11,10 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const EXERCISE_FREQUENCY_OPTIONS = [
+  'None', '1-2 times per week', '3-4 times per week', '5-6 times per week', 'Daily'
+] as const;
+
 const InitialIntakeInputSchema = z.object({
   fullName: z.string().optional().describe('The full name of the user.'),
   age: z.number().describe('The age of the user. Must be 18 or older.'),
@@ -18,8 +23,8 @@ const InitialIntakeInputSchema = z.object({
   diagnosisHistory: z.enum(['Yes', 'No', 'Prefer not to say']).describe('Whether the user has been diagnosed with any mental health conditions.'),
   diagnoses: z.array(z.string()).optional().describe('List of mental health conditions the user has been diagnosed with.'),
   currentTreatment: z.enum(['Yes', 'No', 'Prefer not to say']).describe('Whether the user is currently seeing a therapist or mental health professional.'),
-  sleepPatterns: z.number().describe('Average hours of sleep per night.'),
-  exerciseFrequency: z.number().describe('Weekly exercise sessions.'),
+  sleepPatterns: z.number().min(3).max(12).describe('Average hours of sleep per night (scale 3-12).'),
+  exerciseFrequency: z.enum(EXERCISE_FREQUENCY_OPTIONS).describe('Weekly exercise sessions.'),
   substanceUse: z.enum(['Yes often', 'Occasionally', 'No']).describe('Alcohol and smoking habits.'),
   currentStressLevel: z.number().min(1).max(10).describe('Stress level on a scale from 1 to 10.'),
   todayMood: z.string().describe('Emoji representing the user\'s mood today.'),
@@ -56,16 +61,16 @@ const prompt = ai.definePrompt({
   Gender: {{{gender}}}
   Location: {{{location}}}
   Diagnosis History: {{{diagnosisHistory}}}
-  Diagnoses: {{#each diagnoses}}{{{this}}}, {{/each}}
+  Diagnoses: {{#if diagnoses}}{{#each diagnoses}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
   Current Treatment: {{{currentTreatment}}}
   Sleep Patterns: {{{sleepPatterns}}} hours
-  Exercise Frequency: {{{exerciseFrequency}}} sessions per week
+  Exercise Frequency: {{{exerciseFrequency}}}
   Substance Use: {{{substanceUse}}}
   Current Stress Level: {{{currentStressLevel}}} (1-10 scale)
   Today's Mood: {{{todayMood}}}
-  Frequent Emotions: {{#each frequentEmotions}}{{{this}}}, {{/each}}
-  Support Areas: {{#each supportAreas}}{{{this}}}, {{/each}}
-  Content Preferences: {{#each contentPreferences}}{{{this}}}, {{/each}}
+  Frequent Emotions: {{#if frequentEmotions}}{{#each frequentEmotions}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+  Support Areas: {{#if supportAreas}}{{#each supportAreas}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+  Content Preferences: {{#if contentPreferences}}{{#each contentPreferences}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
   Check-in Frequency: {{{checkInFrequency}}}
   Preferred Time: {{{preferredTime}}}
   Additional Information: {{{additionalInformation}}}
