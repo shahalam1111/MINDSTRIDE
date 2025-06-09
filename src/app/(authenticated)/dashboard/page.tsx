@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, Users, Clock, CalendarDays, Sparkles, BookOpen, Activity, MessageSquare, Video, UserRound, Settings } from 'lucide-react';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
-import { AIChatAssistantDialog } from '@/components/app/AIChatAssistantDialog'; // Import the new dialog
+import { AIChatAssistantDialog } from '@/components/app/AIChatAssistantDialog';
 import Image from 'next/image';
 
 
@@ -23,7 +23,7 @@ export default function DashboardPage() {
   const [intakeDataExists, setIntakeDataExists] = useState<boolean | null>(null);
   const [lastMood, setLastMood] = useState<string | null>(null);
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
-  const [isAIChatDialogOpen, setIsAIChatDialogOpen] = useState(false); // State for AI Chat Dialog
+  const [isAIChatDialogOpen, setIsAIChatDialogOpen] = useState(false);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('wellspringUserEmail');
@@ -40,7 +40,6 @@ export default function DashboardPage() {
     if (moodLogString) {
       const moodLog: MoodLogEntry[] = JSON.parse(moodLogString);
       if (moodLog.length > 0) {
-        // Sort by timestamp descending to get the latest
         moodLog.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setLastMood(moodLog[0].mood);
       }
@@ -99,7 +98,6 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         
-        {/* Today's Wellness Check-in */}
         <Card className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Smile className="h-6 w-6 text-primary" />Today's Wellness</CardTitle>
@@ -122,7 +120,6 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
 
-        {/* Personalized Recommendations */}
         <Card className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Sparkles className="h-6 w-6 text-primary" />Personalized For You</CardTitle>
@@ -138,7 +135,6 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
 
-        {/* Quick Actions Panel */}
         <Card className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Zap className="h-6 w-6 text-primary" />Quick Actions</CardTitle>
@@ -162,11 +158,9 @@ export default function DashboardPage() {
             </Button>
           </CardContent>
            <CardFooter>
-             {/* Optional: A main call to action or link */}
           </CardFooter>
         </Card>
         
-        {/* Recent Activity Feed */}
         <Card className="hover:shadow-xl transition-shadow duration-300 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Activity className="h-6 w-6 text-primary" />Recent Activity</CardTitle>
