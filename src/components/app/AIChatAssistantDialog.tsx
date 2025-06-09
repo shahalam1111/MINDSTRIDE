@@ -25,6 +25,7 @@ interface Message {
 }
 
 const WELCOME_MESSAGE_ID = "ai-welcome-message";
+const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 
 export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -36,7 +37,6 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      // Add initial welcome message from AI if no messages exist
       setMessages([
         {
           id: WELCOME_MESSAGE_ID,
@@ -103,6 +103,12 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
+
+      // Save last AI message for recent activity feed
+      localStorage.setItem(LAST_AI_CHAT_ACTIVITY_KEY, JSON.stringify({
+        text: aiMessage.text,
+        timestamp: aiMessage.timestamp.toISOString(),
+      }));
 
     } catch (error) {
       console.error("Failed to get AI response:", error);
