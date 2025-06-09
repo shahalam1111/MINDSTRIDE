@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -75,6 +75,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
     // Add more items here like:
     // { href: "/dashboard/chat", icon: MessageCircle, label: "AI Chat" },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },

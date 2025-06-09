@@ -46,9 +46,11 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">How are you feeling?</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Log your mood to gain insights. (Feature coming soon)
+              Log your mood to gain insights.
             </p>
-            <Button variant="outline" size="sm" className="mt-4" disabled>Record Mood</Button>
+            <Button asChild variant="outline" size="sm" className="mt-4">
+              <Link href="/dashboard/mood-checkin">Record Mood</Link>
+            </Button>
           </CardContent>
         </Card>
 
