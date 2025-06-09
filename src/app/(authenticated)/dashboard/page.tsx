@@ -9,6 +9,7 @@ import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, 
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
 import { AIChatAssistantDialog } from '@/components/app/AIChatAssistantDialog';
 import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 
 interface MoodLogEntry {
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const [lastMood, setLastMood] = useState<string | null>(null);
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [isAIChatDialogOpen, setIsAIChatDialogOpen] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('wellspringUserEmail');
@@ -44,6 +46,8 @@ export default function DashboardPage() {
         setLastMood(moodLog[0].mood);
       }
     }
+    const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
+    setIsPremiumUser(premiumStatus === 'true');
   }, []);
 
 
@@ -79,6 +83,21 @@ export default function DashboardPage() {
           <p className="mb-2 text-foreground">
             Explore resources, track your progress, and connect with tools designed for your wellness journey.
           </p>
+          {/* Mock Premium Toggle for Prototyping */}
+          <div className="mt-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const newPremiumStatus = !isPremiumUser;
+                localStorage.setItem('wellspringUserIsPremium', String(newPremiumStatus));
+                setIsPremiumUser(newPremiumStatus);
+                window.location.reload(); // Reload to reflect changes in layout
+              }}
+            >
+              Toggle Premium Status (Dev): {isPremiumUser ? "Active" : "Inactive"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -105,12 +124,12 @@ export default function DashboardPage() {
           <CardContent className="flex-grow">
             <p className="text-muted-foreground mb-3">How are you feeling right now?</p>
             <div className="flex items-center gap-2 mb-4">
-                 <span className="text-2xl p-2 bg-muted rounded-md">😌</span>
-                 <span className="text-sm text-muted-foreground">Feeling Calm</span>
+                 <span className="text-2xl p-2 bg-muted rounded-md">{lastMood || '🤔'}</span>
+                 <span className="text-sm text-muted-foreground">{lastMood ? `Last mood: ${lastMood}` : 'Log your mood!'}</span>
             </div>
             <div className="space-y-2">
-                <p className="text-sm">Stress: <span className="font-semibold text-primary">Low</span> (Placeholder)</p>
-                <p className="text-sm">Sleep: <span className="font-semibold text-primary">Good</span> (Placeholder)</p>
+                <p className="text-sm">Stress: <span className="font-semibold text-primary">Moderate</span> (Placeholder)</p>
+                <p className="text-sm">Sleep: <span className="font-semibold text-primary">7 hours</span> (Placeholder)</p>
             </div>
           </CardContent>
           <CardFooter>
@@ -144,9 +163,25 @@ export default function DashboardPage() {
               <MessageCircle className="h-6 w-6 mb-1" />
               Chat with AI
             </Button>
-            <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
-              <Video className="h-6 w-6 mb-1" />
-              Schedule (Premium)
+             <Button 
+                variant="secondary" 
+                className="h-auto py-3 flex-col relative" 
+                asChild={isPremiumUser}
+                onClick={() => !isPremiumUser && alert("This is a premium feature. Please upgrade.")}
+             >
+               {isPremiumUser ? (
+                <Link href="/dashboard/consultations" className="flex flex-col items-center justify-center">
+                    <Video className="h-6 w-6 mb-1" />
+                    Schedule
+                    <Badge variant="outline" className="absolute top-1 right-1 text-xs px-1 py-0.5 border-yellow-500 text-yellow-600">Premium</Badge>
+                </Link>
+               ) : (
+                <>
+                    <Video className="h-6 w-6 mb-1" />
+                    Schedule
+                    <Badge variant="outline" className="absolute top-1 right-1 text-xs px-1 py-0.5 border-muted-foreground text-muted-foreground">Premium</Badge>
+                </>
+               )}
             </Button>
              <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
               <Users className="h-6 w-6 mb-1" />

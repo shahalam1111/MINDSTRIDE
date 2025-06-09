@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText } from 'lucide-react';
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video } from 'lucide-react'; // Added Video icon
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -27,19 +27,26 @@ interface NavItemProps {
   label: string;
   currentPath: string;
   onClick?: () => void;
+  disabled?: boolean;
+  isPremiumFeature?: boolean;
 }
 
-const NavItem = ({ href, icon: Icon, label, currentPath, onClick }: NavItemProps) => (
+const NavItem = ({ href, icon: Icon, label, currentPath, onClick, disabled, isPremiumFeature }: NavItemProps) => (
   <Link
-    href={href}
+    href={disabled ? '#' : href}
     onClick={onClick}
     className={cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:text-primary hover:bg-muted",
-      currentPath === href ? "bg-primary text-primary-foreground hover:text-primary-foreground" : ""
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all",
+      disabled ? "cursor-not-allowed opacity-50" : "hover:text-primary hover:bg-muted",
+      currentPath === href && !disabled ? "bg-primary text-primary-foreground hover:text-primary-foreground" : ""
     )}
+    aria-disabled={disabled}
+    tabIndex={disabled ? -1 : undefined}
   >
     <Icon className="h-5 w-5" />
     {label}
+    {isPremiumFeature && !disabled && <span className="ml-auto text-xs px-1.5 py-0.5 rounded-sm bg-yellow-400 text-yellow-900 font-medium">Premium</span>}
+     {isPremiumFeature && disabled && <span className="ml-auto text-xs px-1.5 py-0.5 rounded-sm bg-muted-foreground/20 text-muted-foreground font-medium">Premium</span>}
   </Link>
 );
 
@@ -50,10 +57,13 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
 
   useEffect(() => {
     const loggedInUser = localStorage.getItem('wellspringUserLoggedIn');
     const storedEmail = localStorage.getItem('wellspringUserEmail');
+    const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
+    
     if (!loggedInUser) {
       router.replace('/sign-in');
     } else {
@@ -61,14 +71,16 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
       if (storedEmail) {
         setUserEmail(storedEmail);
       }
+      setIsPremiumUser(premiumStatus === 'true');
     }
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('wellspringUserLoggedIn');
     localStorage.removeItem('wellspringUserEmail');
-    localStorage.removeItem('wellspringUserIntakeData'); // Clear intake data on logout
-    localStorage.removeItem('wellspringUserMoodLog'); // Clear mood log on logout
+    localStorage.removeItem('wellspringUserIntakeData'); 
+    localStorage.removeItem('wellspringUserMoodLog');
+    localStorage.removeItem('wellspringUserIsPremium'); // Clear premium status on logout
     setIsAuthenticated(false); 
     router.replace('/');
   };
@@ -79,6 +91,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/dashboard/intake", icon: FileText, label: "Intake Form" },
     { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
+    { href: "/dashboard/consultations", icon: Video, label: "Consultations", isPremiumFeature: true, disabled: !isPremiumUser },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },
     // { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
@@ -104,7 +117,13 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
         <span className="text-xl font-headline font-semibold">Wellspring</span>
       </Link>
       {navItems.map(item => (
-        <NavItem key={item.href} {...item} currentPath={pathname} onClick={closeSheet} />
+        <NavItem 
+            key={item.href} 
+            {...item} 
+            currentPath={pathname} 
+            onClick={closeSheet} 
+            disabled={item.isPremiumFeature && !isPremiumUser}
+        />
       ))}
     </nav>
   );
@@ -167,6 +186,15 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
               <DropdownMenuLabel>{userEmail || "My Account"}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/dashboard/intake')}>Intake Form</DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                    if (isPremiumUser) router.push('/dashboard/consultations');
+                    else alert("Upgrade to premium to access consultations.");
+                }}
+                disabled={!isPremiumUser}
+               >
+                Consultations {isPremiumUser && <Badge variant="outline" className="ml-2 border-yellow-500 text-yellow-600">Premium</Badge>}
+              </DropdownMenuItem>
               {/* 
                 <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>Profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>Settings</DropdownMenuItem>
@@ -184,5 +212,3 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     </div>
   );
 }
-
-    
