@@ -1,7 +1,8 @@
 
 'use server';
 /**
- * @fileOverview Analyzes the user's initial intake form data to identify key areas of concern and potential support needs.
+ * @fileOverview Analyzes the user's initial intake form data to identify key areas of concern and potential support needs,
+ * providing deep, analytical insights and research-informed recommendations for mood enhancement.
  *
  * - analyzeInitialIntake - A function that analyzes the initial intake data.
  * - InitialIntakeInput - The input type for the analyzeInitialIntake function.
@@ -33,14 +34,14 @@ const InitialIntakeInputSchema = z.object({
   contentPreferences: z.array(z.string()).describe('Types of content the user prefers (e.g., text articles, guided meditations).'),
   checkInFrequency: z.enum(['Daily', 'Weekly', 'Only when I ask']).describe('Preferred frequency for check-ins.'),
   preferredTime: z.enum(['Morning', 'Afternoon', 'Evening', 'Night']).describe('Preferred time for check-ins.'),
-  additionalInformation: z.string().optional().describe('Any additional information the user wants to share.'),
+  additionalInformation: z.string().optional().describe('Any additional information the user wants to share, which should be carefully considered for nuanced insights.'),
 });
 export type InitialIntakeInput = z.infer<typeof InitialIntakeInputSchema>;
 
 const InitialIntakeOutputSchema = z.object({
-  keyConcerns: z.array(z.string()).describe('List of key areas of concern identified from the intake data.'),
-  suggestedSupportNeeds: z.array(z.string()).describe('List of suggested support needs based on the intake data.'),
-  personalizedRecommendations: z.array(z.string()).describe('List of personalized recommendations for the user.'),
+  keyConcerns: z.array(z.string()).describe('List of 2-3 primary areas of concern or potential challenges for the user, identified from deep analysis of all intake data.'),
+  suggestedSupportNeeds: z.array(z.string()).describe('List of 2-3 types of support or resources that might be beneficial for the user based on their concerns.'),
+  personalizedRecommendations: z.array(z.string()).describe("List of 2-3 actionable, empathetic, and analytical recommendations specifically aimed at mood enhancement, stress reduction, or addressing key concerns. Each recommendation should be grounded in psychological principles/common research findings and briefly explain the 'why' or how it helps. These should be distinct from general advice and tailored to the user's profile."),
 });
 export type InitialIntakeOutput = z.infer<typeof InitialIntakeOutputSchema>;
 
@@ -52,29 +53,33 @@ const prompt = ai.definePrompt({
   name: 'initialIntakePrompt',
   input: {schema: InitialIntakeInputSchema},
   output: {schema: InitialIntakeOutputSchema},
-  prompt: `You are an AI assistant specialized in analyzing mental health intake forms.
+  prompt: `You are an advanced AI assistant specialized in analyzing mental health intake forms. Your primary function is to provide deep, analytical insights and supportive, research-informed recommendations to help users understand themselves better and enhance their mood and overall well-being. You must process all provided information meticulously, paying close attention to 'Additional Information' for nuanced understanding and context. Your recommendations should be actionable and sound as if derived from reputable mental health research and advice (e.g., principles from CBT, mindfulness, positive psychology).
 
-  Based on the following information provided by the user, identify key areas of concern, suggest support needs, and provide personalized recommendations.
+User's Intake Information:
+Full Name: {{{fullName}}}
+Age: {{{age}}}
+Gender: {{{gender}}}
+Location: {{{location}}}
+Diagnosis History: {{{diagnosisHistory}}}
+Diagnoses: {{#if diagnoses}}{{#each diagnoses}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+Current Treatment: {{{currentTreatment}}}
+Sleep Patterns: {{{sleepPatterns}}} hours
+Exercise Frequency: {{{exerciseFrequency}}}
+Substance Use: {{{substanceUse}}}
+Current Stress Level: {{{currentStressLevel}}} (1-10 scale)
+Today's Mood: {{{todayMood}}}
+Frequent Emotions: {{#if frequentEmotions}}{{#each frequentEmotions}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+Support Areas: {{#if supportAreas}}{{#each supportAreas}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+Content Preferences: {{#if contentPreferences}}{{#each contentPreferences}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
+Check-in Frequency: {{{checkInFrequency}}}
+Preferred Time: {{{preferredTime}}}
+Additional Information: {{{additionalInformation}}}
 
-  Full Name: {{{fullName}}}
-  Age: {{{age}}}
-  Gender: {{{gender}}}
-  Location: {{{location}}}
-  Diagnosis History: {{{diagnosisHistory}}}
-  Diagnoses: {{#if diagnoses}}{{#each diagnoses}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
-  Current Treatment: {{{currentTreatment}}}
-  Sleep Patterns: {{{sleepPatterns}}} hours
-  Exercise Frequency: {{{exerciseFrequency}}}
-  Substance Use: {{{substanceUse}}}
-  Current Stress Level: {{{currentStressLevel}}} (1-10 scale)
-  Today's Mood: {{{todayMood}}}
-  Frequent Emotions: {{#if frequentEmotions}}{{#each frequentEmotions}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
-  Support Areas: {{#if supportAreas}}{{#each supportAreas}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
-  Content Preferences: {{#if contentPreferences}}{{#each contentPreferences}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None specified{{/if}}
-  Check-in Frequency: {{{checkInFrequency}}}
-  Preferred Time: {{{preferredTime}}}
-  Additional Information: {{{additionalInformation}}}
-  `, 
+Based on ALL the information above, including a careful review of any "Additional Information", please generate the following output strictly adhering to the output schema:
+1.  keyConcerns: Identify 2-3 primary areas of concern or potential challenges for the user. Be specific and analytical.
+2.  suggestedSupportNeeds: List 2-3 types of support or resources that might be beneficial for the user, directly linked to the identified key concerns.
+3.  personalizedRecommendations: Provide 2-3 actionable, empathetic, and analytical recommendations specifically aimed at mood enhancement, stress reduction, or addressing key concerns. These recommendations must be grounded in well-established psychological principles and common research findings. For each recommendation, briefly explain the 'why' behind it or how it might help the user. Ensure these are distinct from generic advice and are clearly tailored to the user's specific profile as detailed in their intake.
+  `,
 });
 
 const analyzeInitialIntakeFlow = ai.defineFlow(
