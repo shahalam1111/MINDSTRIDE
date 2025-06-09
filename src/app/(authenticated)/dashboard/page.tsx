@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, Users, Clock, CalendarDays, Sparkles, BookOpen, Activity, MessageSquare, Video, UserRound, Settings } from 'lucide-react';
+import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, Users, Clock, CalendarDays, Sparkles, BookOpen, Activity, MessageSquare, Video, UserRound, Settings, ListChecks } from 'lucide-react';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
 import { AIChatAssistantDialog } from '@/components/app/AIChatAssistantDialog';
 import Image from 'next/image';
@@ -125,7 +125,7 @@ export default function DashboardPage() {
     activities.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     setRecentActivities(activities.slice(0, 4)); // Show top 4 recent activities
 
-  }, [isAIChatDialogOpen]); // Re-fetch activities when AI chat dialog closes, or on initial load.
+  }, [isAIChatDialogOpen, open]); // Re-fetch activities when AI chat dialog closes, or on initial load.
 
 
   return (
@@ -292,7 +292,9 @@ export default function DashboardPage() {
             )}
           </CardContent>
           <CardFooter>
-             <Button variant="outline" className="w-full" disabled>View All Activity</Button>
+             <Button variant="outline" className="w-full" asChild>
+                <Link href="/dashboard/activity">View All Activity</Link>
+             </Button>
           </CardFooter>
         </Card>
 

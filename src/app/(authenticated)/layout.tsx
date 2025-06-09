@@ -5,10 +5,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video } from 'lucide-react'; // Added Video icon
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, ListChecks, Activity } from 'lucide-react'; // Added Video, ListChecks icons
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge'; // Added missing import
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +81,9 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     localStorage.removeItem('wellspringUserEmail');
     localStorage.removeItem('wellspringUserIntakeData'); 
     localStorage.removeItem('wellspringUserMoodLog');
-    localStorage.removeItem('wellspringUserIsPremium'); // Clear premium status on logout
+    localStorage.removeItem('wellspringUserIsPremium');
+    localStorage.removeItem('wellspringUserLastAiChatActivity');
+    localStorage.removeItem('wellspringUserAiChatHistory');
     setIsAuthenticated(false); 
     router.replace('/');
   };
@@ -92,6 +94,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/dashboard/intake", icon: FileText, label: "Intake Form" },
     { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
+    { href: "/dashboard/activity", icon: Activity, label: "Activity Log"},
     { href: "/dashboard/consultations", icon: Video, label: "Consultations", isPremiumFeature: true, disabled: !isPremiumUser },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },
     // { href: "/dashboard/settings", icon: Settings, label: "Settings" },

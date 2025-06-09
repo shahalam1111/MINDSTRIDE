@@ -24,8 +24,15 @@ interface Message {
   timestamp: Date;
 }
 
+interface AiChatHistoryEntry {
+  text: string;
+  timestamp: string; // ISO string
+}
+
 const WELCOME_MESSAGE_ID = "ai-welcome-message";
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
+const AI_CHAT_HISTORY_KEY = 'wellspringUserAiChatHistory';
+const MAX_AI_HISTORY_LENGTH = 20;
 
 export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -96,19 +103,32 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
       };
 
       const aiResponse = await aiChatbotAssistant(aiInput);
+      const aiMessageTimestamp = new Date();
       const aiMessage: Message = { 
         id: (Date.now() + 1).toString(), 
         sender: 'ai', 
         text: aiResponse.response,
-        timestamp: new Date()
+        timestamp: aiMessageTimestamp
       };
       setMessages(prev => [...prev, aiMessage]);
 
-      // Save last AI message for recent activity feed
-      localStorage.setItem(LAST_AI_CHAT_ACTIVITY_KEY, JSON.stringify({
-        text: aiMessage.text,
-        timestamp: aiMessage.timestamp.toISOString(),
-      }));
+      const aiMessageActivity: AiChatHistoryEntry = {
+        text: aiResponse.response,
+        timestamp: aiMessageTimestamp.toISOString(),
+      };
+
+      // Save last AI message for dashboard recent activity feed
+      localStorage.setItem(LAST_AI_CHAT_ACTIVITY_KEY, JSON.stringify(aiMessageActivity));
+
+      // Save to AI chat history for the "All Activity" page
+      const existingHistoryString = localStorage.getItem(AI_CHAT_HISTORY_KEY);
+      let existingHistory: AiChatHistoryEntry[] = existingHistoryString ? JSON.parse(existingHistoryString) : [];
+      existingHistory.unshift(aiMessageActivity); // Add to the beginning
+      if (existingHistory.length > MAX_AI_HISTORY_LENGTH) {
+        existingHistory = existingHistory.slice(0, MAX_AI_HISTORY_LENGTH);
+      }
+      localStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(existingHistory));
+
 
     } catch (error) {
       console.error("Failed to get AI response:", error);
