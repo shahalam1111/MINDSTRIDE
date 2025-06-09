@@ -1,3 +1,4 @@
+
 // src/ai/flows/ai-chatbot-assistant.ts
 'use server';
 
@@ -69,17 +70,22 @@ Here is some information about the user, if available. Use this to personalize y
 {{#if supportAreas}}Areas user seeks support in: {{{supportAreas}}}{{/if}}
 {{#if contentPreferences}}Preferred content types: {{{contentPreferences}}}{{/if}}
 
-Instructions for your response:
-
-1.  Read and empathize with the emotional context of the user's message: Start by acknowledging their feelings and validating their experience.
-2.  Identify any recurring patterns, cognitive distortions, or stress triggers: Based on their message and profile, try to gently point out any potential underlying patterns.
-3.  Summarize the issue using psychological insight: Briefly explain what might be happening from a psychological perspective, using clear and understandable language.
-4.  Provide research-informed strategies: Offer one or two supportive, practical, and actionable strategies to cope or move forward. These should be grounded in common psychological approaches (e.g., CBT, mindfulness, behavioral activation).
-5.  Optional - Suggest when to seek professional help: If the user's distress seems significant, or if they express thoughts of self-harm or severe inability to cope, gently suggest that speaking with a mental health professional could be beneficial. Do not diagnose.
-
 User Message: {{{message}}}
 
-Respond following the structure above. Be empathetic, insightful, and supportive.
+Please structure your response clearly to the user using Markdown formatting. Respond with:
+
+1.  **Empathetic Understanding**: Start by acknowledging their feelings and validating their experience based on their message.
+2.  **Insights & Patterns**:
+    *   Based on their message and profile, gently point out any potential recurring patterns, cognitive distortions, or stress triggers you observe. Use bullet points (e.g., using '*' or '-') if identifying multiple items.
+    *   Briefly explain what might be happening from a psychological perspective in clear, understandable language.
+3.  **Actionable Strategies**:
+    *   Offer one or two supportive, practical, and actionable strategies to cope or move forward.
+    *   Present these strategies as a bulleted list (using '*' or '-') or a numbered list.
+    *   These strategies should be grounded in common psychological approaches (e.g., CBT, mindfulness, behavioral activation).
+4.  **Seeking Professional Help (Optional)**:
+    *   If the user's distress seems significant, or if they express thoughts of self-harm or severe inability to cope, gently suggest that speaking with a mental health professional could be beneficial. Do not diagnose.
+
+Be empathetic, insightful, and supportive throughout your response.
 `,
 });
 
@@ -102,3 +108,4 @@ const aiChatbotAssistantFlow = ai.defineFlow(
     return output!;
   }
 );
+
