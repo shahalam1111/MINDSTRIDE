@@ -6,42 +6,72 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AgeVerificationDialog } from '@/components/app/age-verification-dialog';
-import { Zap, Users, ShieldCheck, Brain } from 'lucide-react';
+import { Zap, Users, ShieldCheck, Brain, Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+
 
 export default function LandingPage() {
   const [isAgeDialogOpen, setIsAgeDialogOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="py-4 px-6 md:px-12 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center">
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
             <Brain className="h-8 w-8 text-primary" />
             <span className="text-2xl font-headline font-semibold text-primary">Wellspring</span>
           </Link>
-          <nav className="hidden md:flex gap-4">
+          <nav className="hidden md:flex gap-2">
              <Button variant="ghost" asChild>
                <Link href="#features">Features</Link>
              </Button>
              <Button variant="ghost" asChild>
                <Link href="#about">About</Link>
              </Button>
+             <Button variant="ghost" asChild>
+                <Link href="/contact">Contact</Link>
+             </Button>
           </nav>
-          <Button variant="outline" asChild>
-            <Link href="/sign-in">Sign In</Link>
-          </Button>
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+            <Button onClick={() => setIsAgeDialogOpen(true)}>Get Started</Button>
+          </div>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="outline" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background">
+              <nav className="flex flex-col gap-4 mt-8">
+                <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Features</Link>
+                <Link href="#about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">About</Link>
+                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Contact</Link>
+                <hr className="my-2"/>
+                <Button variant="outline" asChild onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+                <Button onClick={() => { setIsAgeDialogOpen(true); setIsMobileMenuOpen(false);}} className="w-full">Get Started</Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
       <main className="flex-grow">
-        <section className="relative py-20 md:py-32 bg-gradient-to-br from-background to-blue-100">
-          <div className="absolute inset-0 opacity-30">
+        <section className="relative py-20 md:py-32 bg-gradient-to-br from-background via-blue-50 to-accent/20">
+          <div className="absolute inset-0 opacity-20">
             <Image
-              src="https://placehold.co/1920x1080.png" // Replace with actual mental health imagery
+              src="https://placehold.co/1920x1080.png" 
               alt="Abstract calming background"
               layout="fill"
               objectFit="cover"
               quality={75}
+              priority
               data-ai-hint="calm abstract"
             />
           </div>
@@ -49,8 +79,8 @@ export default function LandingPage() {
             <h1 className="text-4xl md:text-6xl font-headline font-bold text-foreground mb-6">
               Your Mental Wellness Journey Starts Here
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Wellspring provides AI-powered assistance, professional consultations, peer support, and personalized wellness tools in a secure, user-friendly environment.
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
+              Wellspring provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button
@@ -84,14 +114,14 @@ export default function LandingPage() {
                 <p className="text-muted-foreground">Personalized support and coping strategies, available 24/7.</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                <Image src="https://placehold.co/100x100.png" alt="Video Consultations" width={80} height={80} className="mb-4 rounded-full" data-ai-hint="video call" />
+                 <Image src="https://placehold.co/80x80.png" alt="Video Call Icon" width={80} height={80} className="mb-4 rounded-full" data-ai-hint="video call"/>
                 <h3 className="text-xl font-semibold text-foreground mb-2">Video Consultations</h3>
-                <p className="text-muted-foreground">Connect with licensed therapists securely (Premium).</p>
+                <p className="text-muted-foreground">Connect with licensed therapists securely (Coming Soon).</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <Users className="h-12 w-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">Community Forum</h3>
-                <p className="text-muted-foreground">Share experiences and find support in an anonymized space.</p>
+                <p className="text-muted-foreground">Share experiences and find support in an anonymized space (Coming Soon).</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <ShieldCheck className="h-12 w-12 text-primary mb-4" />
@@ -129,16 +159,16 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="py-8 bg-slate-800 text-slate-300">
+      <footer className="py-8 bg-slate-900 text-slate-300 border-t border-slate-700">
         <div className="container mx-auto px-6 text-center">
           <div className="flex justify-center gap-6 mb-4">
-            <Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link>
-            <Link href="/terms-of-service" className="hover:text-primary">Terms of Service</Link>
-            <Link href="/contact" className="hover:text-primary">Contact Us</Link>
+            <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
           <p>&copy; {new Date().getFullYear()} Wellspring. All rights reserved.</p>
-          <p className="text-sm mt-2">
-            Disclaimer: Wellspring is a mental health support platform and does not provide medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+          <p className="text-sm mt-2 text-slate-400">
+            Disclaimer: Wellspring is a mental health support platform and does not provide medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. If you are in a crisis, please contact emergency services immediately.
           </p>
         </div>
       </footer>
