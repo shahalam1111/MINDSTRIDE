@@ -1,21 +1,28 @@
 
 "use client";
 
-import { useEffect, useState, use } from 'react'; // Added 'use'
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video, Clock } from 'lucide-react';
+import { Calendar } from "@/components/ui/calendar";
+import { useToast } from "@/hooks/use-toast";
+import { format, parseISO } from 'date-fns';
 
 interface TherapistProfilePageProps {
-  params: Promise<{ // params is now a Promise
+  params: Promise<{
     therapistId: string;
   }>;
 }
 
-// Placeholder data - in a real app, this would come from a backend
+interface AvailabilitySlot {
+  date: string; // YYYY-MM-DD
+  slots: string[]; // HH:mm
+}
+
 const placeholderTherapistDetails = {
   id: '1',
   name: 'Dr. Emily Carter',
@@ -25,21 +32,26 @@ const placeholderTherapistDetails = {
   languages: ['English', 'Spanish'],
   rating: 4.8,
   reviewsCount: 120,
-  sessionPrice: 120, // Example price
-  availability: [ // Example structure
-    { date: '2024-08-05', slots: ['09:00', '10:00', '14:00'] },
-    { date: '2024-08-06', slots: ['11:00', '15:00'] },
-  ]
+  sessionPrice: 120,
+  availability: [
+    { date: '2024-09-10', slots: ['09:00', '10:00', '14:00', '15:00'] },
+    { date: '2024-09-11', slots: ['11:00', '15:00', '16:00'] },
+    { date: '2024-09-12', slots: ['09:00', '10:00', '11:00', '14:00'] },
+    { date: '2024-09-16', slots: ['10:00', '11:00'] },
+  ] as AvailabilitySlot[]
 };
 
 
 export default function TherapistProfilePage({ params: paramsPromise }: TherapistProfilePageProps) {
-  const params = use(paramsPromise); // Unwrap the promise
-  const { therapistId } = params; // Access therapistId from the resolved params
+  const params = use(paramsPromise);
+  const { therapistId } = params;
+  const { toast } = useToast();
 
   const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   
-  // In a real app, you'd fetch therapist details based on therapistId
   const therapist = placeholderTherapistDetails; // Using placeholder
 
   useEffect(() => {
@@ -47,6 +59,37 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
     setIsPremiumUser(premiumStatus === 'true');
   }, []);
 
+  useEffect(() => {
+    if (selectedDate && therapist.availability) {
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const dayAvailability = therapist.availability.find(day => day.date === formattedDate);
+      setAvailableTimes(dayAvailability ? dayAvailability.slots : []);
+      setSelectedTime(undefined); // Reset selected time when date changes
+    } else {
+      setAvailableTimes([]);
+      setSelectedTime(undefined);
+    }
+  }, [selectedDate, therapist.availability]);
+
+  const handleBooking = () => {
+    if (!selectedDate || !selectedTime) {
+      toast({
+        title: "Selection Incomplete",
+        description: "Please select a date and time for your session.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Simulate payment and booking
+    toast({
+      title: "Proceeding to Payment (Simulated)",
+      description: `Booking for ${therapist.name} on ${format(selectedDate, 'PPP')} at ${selectedTime}. You would now be redirected to a secure payment gateway.`,
+    });
+    // In a real app:
+    // 1. Lock the time slot (backend operation)
+    // 2. Redirect to payment gateway
+    // 3. On payment success, confirm booking, send emails (backend operations)
+  };
 
   if (isPremiumUser === null) {
     return <div className="flex items-center justify-center h-full"><p>Loading premium status...</p></div>;
@@ -85,6 +128,9 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   if (!therapist) {
     return <div className="text-center py-10">Therapist not found.</div>;
   }
+
+  const today = new Date();
+  const availableDates = therapist.availability.map(a => parseISO(a.date));
 
   return (
     <div className="space-y-8">
@@ -130,12 +176,57 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
                 <CalendarDays className="h-6 w-6 text-primary" />
                 Book a Session <Badge variant="outline" className="ml-2 border-primary text-primary">Premium</Badge>
             </h3>
-            {/* Placeholder for interactive calendar and time slot selection */}
-            <div className="p-6 border rounded-lg bg-muted/30 text-center">
-              <p className="text-muted-foreground mb-3">Interactive calendar for booking will appear here.</p>
-              <Button disabled>Select Date & Time (Coming Soon)</Button>
-              <p className="text-xs text-muted-foreground mt-2">Real-time slot locking and payment integration will be part of this step.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="border rounded-lg p-2 sm:p-4 bg-muted/20 shadow-sm">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => 
+                            date < today || 
+                            !availableDates.some(availableDate => 
+                                format(availableDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+                            )
+                        }
+                        initialFocus
+                        className="w-full flex justify-center"
+                    />
+                </div>
+                <div className="space-y-4">
+                    {selectedDate && (
+                        <div>
+                            <h4 className="text-md font-medium mb-3 text-foreground">
+                                Available slots for: <span className="text-primary">{format(selectedDate, "PPP")}</span>
+                            </h4>
+                            {availableTimes.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {availableTimes.map(time => (
+                                    <Button 
+                                        key={time} 
+                                        variant={selectedTime === time ? "default" : "outline"}
+                                        onClick={() => setSelectedTime(time)}
+                                        className="flex items-center justify-center gap-1.5"
+                                    >
+                                        <Clock className="h-4 w-4"/>
+                                        {time}
+                                    </Button>
+                                ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No available slots for this date. Please select another date.</p>
+                            )}
+                        </div>
+                    )}
+                    {!selectedDate && (
+                         <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                            <p className="text-muted-foreground">Please select a date from the calendar to see available times.</p>
+                        </div>
+                    )}
+                </div>
             </div>
+             <p className="text-xs text-muted-foreground mt-4 text-center">
+                Real-time slot availability and payment integration are simulated for this prototype.
+            </p>
           </div>
 
           <div className="mt-6 pt-6 border-t">
@@ -149,9 +240,14 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
           </div>
         </CardContent>
         <CardFooter className="p-6 border-t bg-muted/20">
-            <Button size="lg" className="w-full" disabled>
+            <Button 
+                size="lg" 
+                className="w-full" 
+                onClick={handleBooking}
+                disabled={!selectedDate || !selectedTime}
+            >
                 <Video className="mr-2 h-5 w-5"/>
-                Proceed to Book Session (Payment Required)
+                Proceed to Book Session (Payment Simulated)
             </Button>
         </CardFooter>
       </Card>
