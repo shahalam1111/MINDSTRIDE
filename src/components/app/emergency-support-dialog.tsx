@@ -45,10 +45,10 @@ export function EmergencySupportDialog({ open, onOpenChange }: EmergencySupportD
                 <li key={contact.name} className="p-3 bg-muted/50 rounded-md border">
                   <h4 className="font-semibold text-foreground">{contact.name}</h4>
                   <p className="text-sm text-muted-foreground mb-1">{contact.description}</p>
-                  <div className="flex items-center gap-4 mt-1">
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
                     <Button variant="outline" size="sm" asChild>
-                      <a href={`tel:${contact.number.replace(/\D/g, '')}`} className="flex items-center">
-                        <Phone className="h-4 w-4 mr-1.5" /> Call {contact.number}
+                      <a href={contact.number.startsWith('Text') ? '#' : `tel:${contact.number.replace(/\D/g, '')}`} className="flex items-center">
+                        <Phone className="h-4 w-4 mr-1.5" /> {contact.number.startsWith('Text') ? 'Instructions' : 'Call'} {contact.number}
                       </a>
                     </Button>
                     {contact.website && (
@@ -71,20 +71,22 @@ export function EmergencySupportDialog({ open, onOpenChange }: EmergencySupportD
                  <li key={resource.name} className="p-3 bg-muted/50 rounded-md border">
                     <h4 className="font-semibold text-foreground">{resource.name}</h4>
                     <p className="text-sm text-muted-foreground mb-1">{resource.description}</p>
-                     {resource.number && (
-                        <Button variant="outline" size="sm" asChild className="mr-2 mt-1">
-                        <a href={`tel:${resource.number.replace(/\D/g, '')}`} className="flex items-center">
-                            <Phone className="h-4 w-4 mr-1.5" /> Call {resource.number}
-                        </a>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      {resource.number && (
+                          <Button variant="outline" size="sm" asChild>
+                          <a href={`tel:${resource.number.replace(/\D/g, '')}`} className="flex items-center">
+                              <Phone className="h-4 w-4 mr-1.5" /> Call {resource.number}
+                          </a>
+                          </Button>
+                      )}
+                      {resource.website && (
+                        <Button variant="link" size="sm" asChild className="p-0 h-auto">
+                          <a href={resource.website} target="_blank" rel="noopener noreferrer" className="flex items-center text-primary">
+                            Visit Website <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                          </a>
                         </Button>
-                    )}
-                    {resource.website && (
-                      <Button variant="link" size="sm" asChild className="p-0 h-auto mt-1">
-                        <a href={resource.website} target="_blank" rel="noopener noreferrer" className="flex items-center text-primary">
-                          Visit Website <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                        </a>
-                      </Button>
-                    )}
+                      )}
+                    </div>
                  </li>
                 ))}
              </ul>

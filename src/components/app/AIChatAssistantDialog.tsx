@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { aiChatbotAssistant, type AIChatbotAssistantInput } from '@/ai/flows/ai-chatbot-assistant';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, ShieldAlert } from 'lucide-react';
+import { format } from 'date-fns';
+import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
 
 interface AIChatAssistantDialogProps {
   open: boolean;
@@ -19,25 +21,34 @@ interface Message {
   id: string;
   sender: 'user' | 'ai';
   text: string;
+  timestamp: Date;
 }
+
+const WELCOME_MESSAGE_ID = "ai-welcome-message";
 
 export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) {
-      // Optionally, greet the user or load initial state when dialog opens
-      // For now, we just clear previous messages if any, or persist them if desired
-      // setMessages([]); // Uncomment to clear messages each time
+    if (open && messages.length === 0) {
+      // Add initial welcome message from AI if no messages exist
+      setMessages([
+        {
+          id: WELCOME_MESSAGE_ID,
+          sender: 'ai',
+          text: "Hello! I'm your Wellspring AI Assistant. How can I help you today?",
+          timestamp: new Date(),
+        }
+      ]);
     }
-  }, [open]);
+  }, [open, messages.length]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages are added
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
     }
@@ -46,7 +57,12 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
   const handleSubmitMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: inputValue.trim() };
+    const userMessage: Message = { 
+      id: Date.now().toString(), 
+      sender: 'user', 
+      text: inputValue.trim(),
+      timestamp: new Date() 
+    };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
@@ -62,7 +78,6 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           gender: parsedIntakeData.gender,
           location: parsedIntakeData.location,
           diagnosisHistory: parsedIntakeData.diagnosisHistory,
-          // diagnoses: parsedIntakeData.diagnoses?.join(', '), // Example if flow expected string
           currentTreatment: parsedIntakeData.currentTreatment,
           sleepPatterns: parsedIntakeData.sleepPatterns,
           exerciseFrequency: parsedIntakeData.exerciseFrequency,
@@ -81,7 +96,12 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
       };
 
       const aiResponse = await aiChatbotAssistant(aiInput);
-      const aiMessage: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: aiResponse.response };
+      const aiMessage: Message = { 
+        id: (Date.now() + 1).toString(), 
+        sender: 'ai', 
+        text: aiResponse.response,
+        timestamp: new Date()
+      };
       setMessages(prev => [...prev, aiMessage]);
 
     } catch (error) {
@@ -91,72 +111,91 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
         description: "Couldn't connect to the AI assistant. Please try again later.",
         variant: "destructive",
       });
-      // Optionally add the error message back to input or a system message
-      // setMessages(prev => [...prev, {id: 'error', sender: 'ai', text: "Sorry, I couldn't respond right now."}]);
+      setMessages(prev => [...prev, {
+        id: 'error-' + Date.now().toString(), 
+        sender: 'ai', 
+        text: "Sorry, I encountered an error and couldn't respond. Please try again.",
+        timestamp: new Date()
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] md:max-w-[600px] lg:max-w-[700px] h-[70vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-2 border-b">
-          <DialogTitle className="text-2xl font-headline">AI Chat Assistant</DialogTitle>
-          <DialogDescription>
-            Talk to your AI assistant for support, insights, or just a friendly chat.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="flex-grow p-6" ref={scrollAreaRef}>
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[70%] p-3 rounded-lg shadow ${
-                    msg.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[70%] p-3 rounded-lg shadow bg-muted text-muted-foreground flex items-center">
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Thinking...
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-
-        <DialogFooter className="p-6 pt-2 border-t">
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleSubmitMessage(); }}
-            className="flex w-full items-center space-x-2"
-          >
-            <Input
-              type="text"
-              placeholder="Type your message..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              disabled={isLoading}
-              className="flex-grow"
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !inputValue.trim()}>
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-              <span className="sr-only">Send</span>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[525px] md:max-w-[600px] lg:max-w-[700px] h-[70vh] flex flex-col p-0">
+          <DialogHeader className="p-4 pb-2 border-b flex flex-row justify-between items-center">
+            <div>
+              <DialogTitle className="text-xl font-headline">AI Chat Assistant</DialogTitle>
+              <DialogDescription className="text-xs">
+                Your AI companion for support and insights.
+              </DialogDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setIsEmergencyDialogOpen(true)}>
+              <ShieldAlert className="h-4 w-4 mr-1.5 text-destructive" />
+              Crisis Help
             </Button>
-          </form>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+            <div className="space-y-3">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div
+                    className={`max-w-[75%] p-3 rounded-lg shadow-sm ${
+                      msg.sender === 'user'
+                        ? 'bg-primary text-primary-foreground rounded-br-none'
+                        : 'bg-muted text-muted-foreground rounded-bl-none'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <span className="text-xs text-muted-foreground/70 mt-1 px-1">
+                    {format(msg.timestamp, 'p')}
+                  </span>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex items-start">
+                  <div className="max-w-[75%] p-3 rounded-lg shadow-sm bg-muted text-muted-foreground rounded-bl-none flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="p-4 pt-2 border-t flex-col space-y-2">
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSubmitMessage(); }}
+              className="flex w-full items-center space-x-2"
+            >
+              <Input
+                type="text"
+                placeholder="Type your message..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                disabled={isLoading}
+                className="flex-grow"
+                aria-label="Chat message input"
+              />
+              <Button type="submit" size="icon" disabled={isLoading || !inputValue.trim()} aria-label="Send message">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              </Button>
+            </form>
+            <p className="text-xs text-muted-foreground text-center px-2">
+              AI responses are for informational purposes and not a substitute for professional advice. If you are in crisis, please use the Crisis Help button or contact emergency services.
+            </p>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <EmergencySupportDialog open={isEmergencyDialogOpen} onOpenChange={setIsEmergencyDialogOpen} />
+    </>
   );
 }
