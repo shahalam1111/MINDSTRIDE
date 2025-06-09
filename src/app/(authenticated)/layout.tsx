@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video } from 'lucide-react'; // Added Video icon
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge'; // Added missing import
 import {
   DropdownMenu,
   DropdownMenuContent,
