@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,102 @@ const WELCOME_MESSAGE_ID = "ai-welcome-message";
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const AI_CHAT_HISTORY_KEY = 'wellspringUserAiChatHistory';
 const MAX_AI_HISTORY_LENGTH = 20;
+
+// Helper component to render a line of text with basic Markdown support
+const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
+  const trimmedLine = line.trimStart(); // Keep leading spaces for potential nested lists if AI generates them
+
+  // Process inline **bold** and *italic*/_italic_
+  const processInlineMarkdown = (text: string): ReactNode[] => {
+    const parts: ReactNode[] = [];
+    let remainingText = text;
+    let key = 0;
+
+    // Split by **bold** or *italic* or _italic_
+    // Regex: (\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_)
+    // Group 1: Full match
+    // Group 2: Content of **bold**
+    // Group 3: Content of *italic*
+    // Group 4: Content of _italic_
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(remainingText)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(remainingText.substring(lastIndex, match.index));
+      }
+
+      const fullMatch = match[0];
+      const boldContent = match[2];
+      const italicStarContent = match[3];
+      const italicUnderscoreContent = match[4];
+
+      if (boldContent) {
+        parts.push(<strong className="font-semibold text-foreground" key={`md-${key++}`}>{boldContent}</strong>);
+      } else if (italicStarContent) {
+        parts.push(<em className="italic" key={`md-${key++}`}>{italicStarContent}</em>);
+      } else if (italicUnderscoreContent) {
+        parts.push(<em className="italic" key={`md-${key++}`}>{italicUnderscoreContent}</em>);
+      }
+      lastIndex = match.index + fullMatch.length;
+    }
+
+    // Add any remaining text after the last match
+    if (lastIndex < remainingText.length) {
+      parts.push(remainingText.substring(lastIndex));
+    }
+    
+    if (parts.length === 0 && remainingText.length > 0) { // Handle lines with no markdown
+        return [remainingText];
+    }
+
+    return parts;
+  };
+
+  // Handle headings like "**Title:**" or "**1. Title:**"
+  // Regex: ^\s*\*\*(?:(\d+\.\s+))?(.+?):\*\*\s*$
+  const headingMatch = trimmedLine.match(/^\s*\*\*(?:(\d+\.\s+))?(.+?):\*\*\s*$/);
+  if (headingMatch) {
+    const number = headingMatch[1] || ''; // e.g., "1. "
+    const text = headingMatch[2]; // Just the text part of the heading
+    return (
+      <p className="text-lg font-semibold mt-3 mb-1 text-foreground">
+        {number}{text}:
+      </p>
+    );
+  }
+
+  // Handle bullet points "* item" or "- item"
+  // Regex: ^\s*([*-])\s+(.*)
+  const bulletMatch = trimmedLine.match(/^\s*([*-])\s+(.*)/);
+  if (bulletMatch) {
+    const content = bulletMatch[2];
+    const indentLevel = line.match(/^\s*/)?.[0].length || 0; // Basic indent detection
+    const marginLeft = Math.min(Math.floor(indentLevel / 2) * 0.5, 2); // Max 2rem indent e.g. ml-8
+    
+    return (
+      <div className={`text-muted-foreground flex items-start`} style={{ marginLeft: `${marginLeft}rem` }}>
+        <span className="mr-2 text-primary">•</span>
+        <span>{processInlineMarkdown(content)}</span>
+      </div>
+    );
+  }
+  
+  // Handle regular paragraph lines with inline bold/italic
+  if (trimmedLine) {
+    return <p className="text-muted-foreground">{processInlineMarkdown(trimmedLine)}</p>;
+  }
+
+  // Return an empty paragraph or similar for intentionally blank lines to maintain spacing
+  if (line === '') {
+    return <p className="h-4"></p>; // Represents a line break, adjust height as needed
+  }
+
+  return null; // For lines that are only whitespace or otherwise not rendered
+};
+
 
 export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -167,11 +263,11 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           </DialogHeader>
           
           <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-            <div className="space-y-3">
+            <div className="space-y-1"> {/* Reduced space-y for tighter line grouping */}
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                  className={`flex flex-col mb-2 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                 >
                   <div
                     className={`max-w-[75%] p-3 rounded-lg shadow-sm ${
@@ -180,11 +276,9 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
                         : 'bg-muted text-muted-foreground rounded-bl-none'
                     }`}
                   >
-                    {/* Basic Markdown-like rendering for bullet points */}
+                    {/* Render each line using MarkdownLineRenderer */}
                     {msg.text.split('\n').map((line, index) => (
-                        <p key={index} className={line.trim().startsWith('* ') || line.trim().startsWith('- ') ? 'ml-4' : ''}>
-                            {line.trim().startsWith('* ') || line.trim().startsWith('- ') ? `• ${line.substring(line.indexOf(' ') + 1)}` : line}
-                        </p>
+                      <MarkdownLineRenderer key={`${msg.id}-line-${index}`} line={line} />
                     ))}
                   </div>
                   <span className="text-xs text-muted-foreground/70 mt-1 px-1">
@@ -231,3 +325,5 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
     </>
   );
 }
+
+    
