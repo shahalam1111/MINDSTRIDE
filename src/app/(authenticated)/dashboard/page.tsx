@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, Users, Clock, CalendarDays, Sparkles, BookOpen, Activity, MessageSquare, Video, UserRound, Settings, ListChecks } from 'lucide-react';
+import { Smile, BarChart3, MessageCircle, FileText, ShieldAlert, LifeBuoy, Zap, Users, Clock, CalendarDays, Sparkles, BookOpen, Activity, MessageSquare, Video, UserRound, Settings, ListChecks, Loader2 } from 'lucide-react';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
 import { AIChatAssistantDialog } from '@/components/app/AIChatAssistantDialog';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { generateInsights, type InsightGeneratorInput } from '@/ai/flows/insight-generator';
+import { useToast } from '@/hooks/use-toast';
 
 interface MoodLogEntry {
   id: string;
@@ -33,36 +35,120 @@ interface ActivityItem {
   category: 'AI Chat' | 'Community' | 'Appointment' | 'Mood Log';
 }
 
+interface IntakeData {
+  fullName?: string;
+  age?: number;
+  gender?: string;
+  location?: string;
+  diagnosisHistory?: string;
+  diagnoses?: string[];
+  currentTreatment?: string;
+  sleepPatterns?: number;
+  exerciseFrequency?: string;
+  substanceUse?: string;
+  currentStressLevel?: number;
+  todayMood?: string; // Emoji
+  frequentEmotions?: string[];
+  supportAreas?: string[];
+  contentPreferences?: string[];
+  checkInFrequency?: string;
+  preferredTime?: string;
+  additionalInformation?: string;
+}
+
+
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const MOOD_LOG_KEY = 'wellspringUserMoodLog';
+const INTAKE_DATA_KEY = 'wellspringUserIntakeData';
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [intakeDataExists, setIntakeDataExists] = useState<boolean | null>(null);
-  const [lastMood, setLastMood] = useState<string | null>(null);
+  const [lastMood, setLastMood] = useState<string | null>(null); // Store emoji for header
+  const [lastMoodEntryForInsight, setLastMoodEntryForInsight] = useState<MoodLogEntry | null>(null); // Store full entry for insight
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [isAIChatDialogOpen, setIsAIChatDialogOpen] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
+  const [personalizedInsight, setPersonalizedInsight] = useState<string | null>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState<boolean>(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('wellspringUserEmail');
     if (storedEmail) {
       setUserName(storedEmail.split('@')[0]);
     }
-    if (localStorage.getItem('wellspringUserIntakeData')) {
-      setIntakeDataExists(true);
-    } else {
-      setIntakeDataExists(false);
-    }
-
+    
     const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
     setIsPremiumUser(premiumStatus === 'true');
 
-    // Load recent activities
-    const activities: ActivityItem[] = [];
+    // Load intake data status and content
+    const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_KEY);
+    let parsedIntakeData: IntakeData | null = null;
+    if (storedIntakeDataString) {
+      setIntakeDataExists(true);
+      parsedIntakeData = JSON.parse(storedIntakeDataString);
+    } else {
+      setIntakeDataExists(false);
+    }
+    
+    // Load mood log for header and insights
+    const moodLogString = localStorage.getItem(MOOD_LOG_KEY);
+    let currentLastMoodEmoji: string | null = null;
+    let currentLastMoodEntry: MoodLogEntry | null = null;
 
-    // 1. AI Chat Activity
+    if (moodLogString) {
+      try {
+        const moodLog: MoodLogEntry[] = JSON.parse(moodLogString);
+        if (moodLog.length > 0) {
+          const sortedMoodLog = moodLog.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          currentLastMoodEntry = sortedMoodLog[0];
+          currentLastMoodEmoji = currentLastMoodEntry.mood;
+        }
+      } catch (e) { console.error("Error parsing mood log", e); }
+    }
+    setLastMood(currentLastMoodEmoji);
+    setLastMoodEntryForInsight(currentLastMoodEntry);
+
+
+    // Fetch personalized insight if intake data exists
+    if (parsedIntakeData) {
+      setIsLoadingInsight(true);
+      const fetchInsight = async () => {
+        try {
+          let summaryParts = [];
+          if (parsedIntakeData?.fullName) summaryParts.push(`Name: ${parsedIntakeData.fullName}`);
+          if (parsedIntakeData?.age) summaryParts.push(`Age: ${parsedIntakeData.age}`);
+          if (parsedIntakeData?.supportAreas && parsedIntakeData.supportAreas.length > 0) summaryParts.push(`Seeks support in: ${parsedIntakeData.supportAreas.join(', ')}`);
+          if (parsedIntakeData?.frequentEmotions && parsedIntakeData.frequentEmotions.length > 0) summaryParts.push(`Often feels: ${parsedIntakeData.frequentEmotions.join(', ')}`);
+          if (parsedIntakeData?.todayMood) summaryParts.push(`Reported mood on intake: ${parsedIntakeData.todayMood}`);
+          
+          const insightInput: InsightGeneratorInput = {
+            intakeSummary: summaryParts.length > 0 ? summaryParts.join('. ') : "User has provided some intake information.",
+            lastMood: currentLastMoodEntry?.mood || parsedIntakeData?.todayMood, // Prefer mood log mood, fallback to intake mood
+            currentStressLevel: parsedIntakeData?.currentStressLevel,
+          };
+          const result = await generateInsights(insightInput);
+          setPersonalizedInsight(result.insightText);
+        } catch (error) {
+          console.error("Failed to generate insight:", error);
+          setPersonalizedInsight("Could not load a personalized tip at this time. Please try again later.");
+          toast({
+            title: "Insight Error",
+            description: "Failed to generate a personalized insight.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingInsight(false);
+        }
+      };
+      fetchInsight();
+    }
+
+
+    // Load recent activities (dependent on mood log being processed first for `currentLastMoodEntry`)
+    const activities: ActivityItem[] = [];
     const lastAiChatString = localStorage.getItem(LAST_AI_CHAT_ACTIVITY_KEY);
     if (lastAiChatString) {
       try {
@@ -78,54 +164,38 @@ export default function DashboardPage() {
       } catch (e) { console.error("Error parsing AI chat activity", e); }
     }
 
-    // 2. Mood Log Activity
-    const moodLogString = localStorage.getItem(MOOD_LOG_KEY);
-    let currentLastMood = null;
-    if (moodLogString) {
-      try {
-        const moodLog: MoodLogEntry[] = JSON.parse(moodLogString);
-        if (moodLog.length > 0) {
-          const sortedMoodLog = moodLog.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-          const lastMoodEntry = sortedMoodLog[0];
-          currentLastMood = lastMoodEntry.mood; // Update lastMood for header
-          activities.push({
-            id: `mood-log-${lastMoodEntry.id}`,
-            icon: Smile,
-            text: `Logged mood: ${lastMoodEntry.mood}${lastMoodEntry.notes ? ` - "${lastMoodEntry.notes.substring(0, 30)}${lastMoodEntry.notes.length > 30 ? '...' : ''}"` : ''}`,
-            timestamp: lastMoodEntry.timestamp,
-            relativeTime: formatDistanceToNow(parseISO(lastMoodEntry.timestamp), { addSuffix: true }),
-            category: 'Mood Log'
-          });
-        }
-      } catch (e) { console.error("Error parsing mood log", e); }
+    if (currentLastMoodEntry) {
+        activities.push({
+        id: `mood-log-${currentLastMoodEntry.id}`,
+        icon: Smile,
+        text: `Logged mood: ${currentLastMoodEntry.mood}${currentLastMoodEntry.notes ? ` - "${currentLastMoodEntry.notes.substring(0, 30)}${currentLastMoodEntry.notes.length > 30 ? '...' : ''}"` : ''}`,
+        timestamp: currentLastMoodEntry.timestamp,
+        relativeTime: formatDistanceToNow(parseISO(currentLastMoodEntry.timestamp), { addSuffix: true }),
+        category: 'Mood Log'
+        });
     }
-    setLastMood(currentLastMood);
-
-
-    // 3. Placeholder Community Activity
+    
     activities.push({
       id: 'community-placeholder-1',
       icon: Users,
       text: "Feature: Posted in 'Anxiety Support' forum.",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // ~2 hours ago
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       relativeTime: formatDistanceToNow(new Date(Date.now() - 2 * 60 * 60 * 1000), { addSuffix: true }),
       category: 'Community'
     });
-
-    // 4. Placeholder Appointment Activity
     activities.push({
       id: 'appointment-placeholder-1',
       icon: CalendarDays,
       text: "Feature: Upcoming consultation with Dr. F.",
-      timestamp: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // ~Tomorrow
+      timestamp: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       relativeTime: formatDistanceToNow(new Date(Date.now() + 24 * 60 * 60 * 1000), { addSuffix: true }),
       category: 'Appointment'
     });
     
     activities.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setRecentActivities(activities.slice(0, 4)); // Show top 4 recent activities
+    setRecentActivities(activities.slice(0, 4));
 
-  }, [isAIChatDialogOpen, open]); // Re-fetch activities when AI chat dialog closes, or on initial load.
+  }, [isAIChatDialogOpen, toast]); // Re-fetch activities/insights when AI chat dialog closes or on initial load.
 
 
   return (
@@ -204,8 +274,8 @@ export default function DashboardPage() {
                  <span className="text-sm text-muted-foreground">{lastMood ? `Last mood: ${lastMood}` : 'Log your mood!'}</span>
             </div>
             <div className="space-y-2">
-                <p className="text-sm">Stress: <span className="font-semibold text-primary">Moderate</span> (Placeholder)</p>
-                <p className="text-sm">Sleep: <span className="font-semibold text-primary">7 hours</span> (Placeholder)</p>
+                <p className="text-sm">Stress: <span className="font-semibold text-primary">Moderate</span> (Placeholder from Intake)</p>
+                <p className="text-sm">Sleep: <span className="font-semibold text-primary">7 hours</span> (Placeholder from Intake)</p>
             </div>
           </CardContent>
           <CardFooter>
@@ -223,10 +293,29 @@ export default function DashboardPage() {
             <p className="text-muted-foreground text-sm">Based on your profile, try these:</p>
             <Button variant="ghost" className="w-full justify-start gap-2"><Zap className="h-4 w-4 text-yellow-500"/> Quick 5-min Meditation</Button>
             <Button variant="ghost" className="w-full justify-start gap-2"><BookOpen className="h-4 w-4 text-green-500"/> Article: Managing Daily Stress</Button>
-            <p className="text-xs text-muted-foreground pt-2">AI insights coming soon!</p>
+            
+            <div className="pt-2 text-sm">
+              {isLoadingInsight && (
+                <div className="flex items-center text-muted-foreground">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating your personalized insight...
+                </div>
+              )}
+              {!isLoadingInsight && personalizedInsight && (
+                <p className="text-foreground italic">"{personalizedInsight}"</p>
+              )}
+              {!isLoadingInsight && !personalizedInsight && intakeDataExists && (
+                <p className="text-muted-foreground">Could not load an insight. Try again later.</p>
+              )}
+              {!isLoadingInsight && !intakeDataExists && (
+                 <p className="text-muted-foreground">
+                  <Link href="/dashboard/intake" className="underline hover:text-primary">Complete your intake form</Link> for personalized insights.
+                </p>
+              )}
+            </div>
           </CardContent>
            <CardFooter>
-             <Button variant="outline" className="w-full" disabled>Explore More</Button>
+             <Button variant="outline" className="w-full" disabled>Explore More Content</Button>
           </CardFooter>
         </Card>
 
@@ -242,22 +331,21 @@ export default function DashboardPage() {
              <Button 
                 variant="secondary" 
                 className="h-auto py-3 flex-col relative" 
-                asChild={isPremiumUser}
-                onClick={() => !isPremiumUser && alert("This is a premium feature. Please upgrade.")}
+                onClick={() => {
+                    if (isPremiumUser) {
+                        router.push("/dashboard/consultations");
+                    } else {
+                        toast({
+                            title: "Premium Feature",
+                            description: "Scheduling consultations is a premium feature. Please upgrade your plan.",
+                            variant: "default"
+                        });
+                    }
+                }}
              >
-               {isPremiumUser ? (
-                <Link href="/dashboard/consultations" className="flex flex-col items-center justify-center">
-                    <Video className="h-6 w-6 mb-1" />
-                    Schedule
-                    <Badge variant="outline" className="absolute top-1 right-1 text-xs px-1 py-0.5 border-yellow-500 text-yellow-600">Premium</Badge>
-                </Link>
-               ) : (
-                <>
-                    <Video className="h-6 w-6 mb-1" />
-                    Schedule
-                    <Badge variant="outline" className="absolute top-1 right-1 text-xs px-1 py-0.5 border-muted-foreground text-muted-foreground">Premium</Badge>
-                </>
-               )}
+               <Video className="h-6 w-6 mb-1" />
+                Schedule
+                <Badge variant="outline" className={`absolute top-1 right-1 text-xs px-1 py-0.5 ${isPremiumUser ? 'border-yellow-500 text-yellow-600' : 'border-muted-foreground text-muted-foreground'}`}>Premium</Badge>
             </Button>
              <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
               <Users className="h-6 w-6 mb-1" />
@@ -305,3 +393,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
