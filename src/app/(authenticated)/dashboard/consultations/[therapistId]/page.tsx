@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react'; // Added 'use'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video } from 'lucide-react';
 
 interface TherapistProfilePageProps {
-  params: {
+  params: Promise<{ // params is now a Promise
     therapistId: string;
-  };
+  }>;
 }
 
 // Placeholder data - in a real app, this would come from a backend
@@ -33,8 +33,10 @@ const placeholderTherapistDetails = {
 };
 
 
-export default function TherapistProfilePage({ params }: TherapistProfilePageProps) {
-  const { therapistId } = params;
+export default function TherapistProfilePage({ params: paramsPromise }: TherapistProfilePageProps) {
+  const params = use(paramsPromise); // Unwrap the promise
+  const { therapistId } = params; // Access therapistId from the resolved params
+
   const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
   
   // In a real app, you'd fetch therapist details based on therapistId
