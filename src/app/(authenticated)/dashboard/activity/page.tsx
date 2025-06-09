@@ -140,7 +140,7 @@ export default function AllActivityPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardDescription>
-            A comprehensive list of your interactions and activities within Wellspring.
+            A comprehensive list of your interactions and activities within MINDSTRIDE.
           </CardDescription>
         </CardHeader>
         <CardContent>

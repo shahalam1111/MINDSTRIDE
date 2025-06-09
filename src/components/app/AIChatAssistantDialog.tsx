@@ -48,7 +48,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
         {
           id: WELCOME_MESSAGE_ID,
           sender: 'ai',
-          text: "Hello! I'm your Wellspring AI Assistant. How can I help you today?",
+          text: "Hello! I'm your MINDSTRIDE AI Assistant. How can I help you today?",
           timestamp: new Date(),
         }
       ]);
@@ -85,15 +85,16 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           gender: parsedIntakeData.gender,
           location: parsedIntakeData.location,
           diagnosisHistory: parsedIntakeData.diagnosisHistory,
+          diagnoses: Array.isArray(parsedIntakeData.diagnoses) ? parsedIntakeData.diagnoses.join(', ') : parsedIntakeData.diagnoses,
           currentTreatment: parsedIntakeData.currentTreatment,
           sleepPatterns: parsedIntakeData.sleepPatterns,
           exerciseFrequency: parsedIntakeData.exerciseFrequency,
           substanceUse: parsedIntakeData.substanceUse,
           currentStressLevel: parsedIntakeData.currentStressLevel,
           todayMood: parsedIntakeData.todayMood,
-          frequentEmotions: parsedIntakeData.frequentEmotions?.join(', '),
-          supportAreas: parsedIntakeData.supportAreas?.join(', '),
-          contentPreferences: parsedIntakeData.contentPreferences?.join(', '),
+          frequentEmotions: Array.isArray(parsedIntakeData.frequentEmotions) ? parsedIntakeData.frequentEmotions.join(', ') : parsedIntakeData.frequentEmotions,
+          supportAreas: Array.isArray(parsedIntakeData.supportAreas) ? parsedIntakeData.supportAreas.join(', ') : parsedIntakeData.supportAreas,
+          contentPreferences: Array.isArray(parsedIntakeData.contentPreferences) ? parsedIntakeData.contentPreferences.join(', ') : parsedIntakeData.contentPreferences,
         };
       }
       
@@ -179,7 +180,12 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
                         : 'bg-muted text-muted-foreground rounded-bl-none'
                     }`}
                   >
-                    {msg.text}
+                    {/* Basic Markdown-like rendering for bullet points */}
+                    {msg.text.split('\n').map((line, index) => (
+                        <p key={index} className={line.trim().startsWith('* ') || line.trim().startsWith('- ') ? 'ml-4' : ''}>
+                            {line.trim().startsWith('* ') || line.trim().startsWith('- ') ? `• ${line.substring(line.indexOf(' ') + 1)}` : line}
+                        </p>
+                    ))}
                   </div>
                   <span className="text-xs text-muted-foreground/70 mt-1 px-1">
                     {format(msg.timestamp, 'p')}

@@ -16,7 +16,7 @@ export default function TermsOfServicePage() {
         <div className="prose prose-lg text-foreground max-w-none">
           <p><em>Last Updated: {new Date().toLocaleDateString()}</em></p>
 
-          <p>Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the Wellspring mental health support platform (the "Service") operated by Wellspring ("us", "we", or "our").</p>
+          <p>Please read these Terms of Service ("Terms", "Terms of Service") carefully before using the MINDSTRIDE mental health support platform (the "Service") operated by MINDSTRIDE ("us", "we", or "our").</p>
 
           <p>Your access to and use of the Service is conditioned on your acceptance of and compliance with these Terms. These Terms apply to all visitors, users, and others who access or use the Service.</p>
 
@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
           <p>You agree not to disclose your password to any third party. You must notify us immediately upon becoming aware of any breach of security or unauthorized use of your account.</p>
 
           <h2 className="font-headline">3. Service Content</h2>
-          <p>The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of Wellspring and its licensors.</p>
+          <p>The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of MINDSTRIDE and its licensors.</p>
           <p>The Service is for informational and support purposes only. It does not provide medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read on the Service.</p>
           
           <h2 className="font-headline">4. User Conduct</h2>
@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
             <li>In any way that violates any applicable national or international law or regulation.</li>
             <li>For the purpose of exploiting, harming, or attempting to exploit or harm minors in any way by exposing them to inappropriate content or otherwise.</li>
             <li>To transmit, or procure the sending of, any advertising or promotional material, including any "junk mail", "chain letter," "spam," or any other similar solicitation.</li>
-            <li>To impersonate or attempt to impersonate Wellspring, a Wellspring employee, another user, or any other person or entity.</li>
+            <li>To impersonate or attempt to impersonate MINDSTRIDE, a MINDSTRIDE employee, another user, or any other person or entity.</li>
           </ul>
 
           <h2 className="font-headline">5. Community Forum</h2>
@@ -53,7 +53,7 @@ export default function TermsOfServicePage() {
 
           <h2 className="font-headline">7. Disclaimer of Warranties; Limitation of Liability</h2>
           <p>The Service is provided on an "AS IS" and "AS AVAILABLE" basis. We disclaim all warranties of any kind, whether express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
-          <p>In no event shall Wellspring, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.</p>
+          <p>In no event shall MINDSTRIDE, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.</p>
 
           <h2 className="font-headline">8. Governing Law</h2>
           <p>These Terms shall be governed and construed in accordance with the laws of [Your Jurisdiction], without regard to its conflict of law provisions.</p>

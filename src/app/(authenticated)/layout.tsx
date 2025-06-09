@@ -106,19 +106,19 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center">
           <Brain className="h-16 w-16 text-primary animate-pulse mb-4" />
-          <p className="text-xl text-foreground">Loading your Wellspring experience...</p>
+          <p className="text-xl text-foreground">Loading your MINDSTRIDE experience...</p>
         </div>
       </div>
     );
   }
 
-  const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : 'W';
+  const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : 'M';
 
   const sidebarContent = (
     <nav className="grid gap-2 text-lg font-medium">
       <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-3 text-primary transition-all hover:text-primary/80 mb-4" onClick={closeSheet}>
         <Brain className="h-7 w-7" />
-        <span className="text-xl font-headline font-semibold">Wellspring</span>
+        <span className="text-xl font-headline font-semibold">MINDSTRIDE</span>
       </Link>
       {navItems.map(item => (
         <NavItem 
@@ -140,7 +140,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
               <Brain className="h-6 w-6" />
-              <span className="font-headline">Wellspring</span>
+              <span className="font-headline">MINDSTRIDE</span>
             </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">

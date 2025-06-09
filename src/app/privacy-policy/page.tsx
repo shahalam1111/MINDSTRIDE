@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <div className="prose prose-lg text-foreground max-w-none">
           <p><em>Last Updated: {new Date().toLocaleDateString()}</em></p>
 
-          <p>Welcome to Wellspring ("we," "our," or "us"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mental health support platform (the "Service"). Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the service.</p>
+          <p>Welcome to MINDSTRIDE ("we," "our," or "us"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mental health support platform (the "Service"). Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the service.</p>
 
           <h2 className="font-headline">1. Information We Collect</h2>
           <p>We may collect information about you in a variety of ways. The information we may collect via the Service includes:</p>

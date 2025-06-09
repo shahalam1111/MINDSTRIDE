@@ -51,7 +51,7 @@ export default function SignInPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-blue-100 p-4">
       <Link href="/" className="mb-8 flex items-center gap-2 text-2xl font-headline font-semibold text-primary hover:text-primary/80 transition-colors">
         <Brain className="h-8 w-8" />
-        <span>Wellspring</span>
+        <span>MINDSTRIDE</span>
       </Link>
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">

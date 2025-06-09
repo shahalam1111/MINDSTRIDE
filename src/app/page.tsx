@@ -20,7 +20,7 @@ export default function LandingPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
             <Brain className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-headline font-semibold text-primary">Wellspring</span>
+            <span className="text-2xl font-headline font-semibold text-primary">MINDSTRIDE</span>
           </Link>
           <nav className="hidden md:flex gap-2">
              <Button variant="ghost" asChild>
@@ -80,7 +80,7 @@ export default function LandingPage() {
               Your Mental Wellness Journey Starts Here
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              Wellspring provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
+              MINDSTRIDE provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button
@@ -146,10 +146,10 @@ export default function LandingPage() {
             </div>
             <div className="md:w-1/2">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold text-foreground mb-6">
-                About Wellspring
+                About MINDSTRIDE
               </h2>
               <p className="text-lg text-muted-foreground mb-4">
-                At Wellspring, we believe that everyone deserves access to mental health support. Our platform is built on the principles of compassion, confidentiality, and personalized care.
+                At MINDSTRIDE, we believe that everyone deserves access to mental health support. Our platform is built on the principles of compassion, confidentiality, and personalized care.
               </p>
               <p className="text-lg text-muted-foreground">
                 We combine cutting-edge AI technology with human-centered design to create a supportive environment where you can explore your mental wellness, develop coping strategies, and connect with others on similar journeys.
@@ -166,9 +166,9 @@ export default function LandingPage() {
             <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
             <Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; {new Date().getFullYear()} Wellspring. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} MINDSTRIDE. All rights reserved.</p>
           <p className="text-sm mt-2 text-slate-400">
-            Disclaimer: Wellspring is a mental health support platform and does not provide medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. If you are in a crisis, please contact emergency services immediately.
+            Disclaimer: MINDSTRIDE is a mental health support platform and does not provide medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. If you are in a crisis, please contact emergency services immediately.
           </p>
         </div>
       </footer>

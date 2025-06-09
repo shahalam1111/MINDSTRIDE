@@ -78,7 +78,7 @@ export default function ConsultationsPage() {
                     Access to video consultations with licensed therapists is a premium feature.
                 </p>
                 <Button size="lg" className="w-full">
-                    Upgrade to Wellspring Premium
+                    Upgrade to MINDSTRIDE Premium
                 </Button>
             </CardContent>
             <CardFooter>

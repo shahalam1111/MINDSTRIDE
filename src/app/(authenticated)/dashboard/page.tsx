@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { generateInsights, type InsightGeneratorInput } from '@/ai/flows/insight-generator';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface MoodLogEntry {
   id: string;
@@ -73,6 +74,7 @@ export default function DashboardPage() {
   const [personalizedInsight, setPersonalizedInsight] = useState<string | null>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState<boolean>(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('wellspringUserEmail');
@@ -205,7 +207,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="text-3xl md:text-4xl font-headline text-foreground">
-                Welcome{userName ? `, ${userName}` : ' to Wellspring'}!
+                Welcome{userName ? `, ${userName}` : ' to MINDSTRIDE'}!
               </CardTitle>
               <CardDescription className="text-lg text-muted-foreground mt-1">
                 This is your personal space to nurture your mental well-being.
@@ -393,4 +395,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

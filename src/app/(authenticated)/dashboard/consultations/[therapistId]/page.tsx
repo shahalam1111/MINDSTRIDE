@@ -110,7 +110,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
                     Viewing therapist profiles and booking consultations is a premium feature.
                 </p>
                  <Button size="lg" className="w-full" onClick={() => alert("Redirect to upgrade page (placeholder)")}>
-                    Upgrade to Wellspring Premium
+                    Upgrade to MINDSTRIDE Premium
                 </Button>
             </CardContent>
              <CardFooter className="flex-col items-start">

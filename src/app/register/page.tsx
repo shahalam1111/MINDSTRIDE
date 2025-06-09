@@ -54,7 +54,7 @@ export default function RegisterPage() {
 
     toast({
       title: "Account Created Successfully",
-      description: "Welcome to Wellspring! Redirecting to your dashboard...",
+      description: "Welcome to MINDSTRIDE! Redirecting to your dashboard...",
     });
     router.push('/dashboard');
   };
@@ -63,11 +63,11 @@ export default function RegisterPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-blue-100 py-12 px-4">
        <Link href="/" className="mb-8 flex items-center gap-2 text-2xl font-headline font-semibold text-primary hover:text-primary/80 transition-colors">
         <Brain className="h-8 w-8" />
-        <span>Wellspring</span>
+        <span>MINDSTRIDE</span>
       </Link>
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-headline">Create Your Wellspring Account</CardTitle>
+          <CardTitle className="text-3xl font-headline">Create Your MINDSTRIDE Account</CardTitle>
           <CardDescription>Join our community and start your wellness journey.</CardDescription>
         </CardHeader>
         <CardContent>

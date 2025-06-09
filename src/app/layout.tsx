@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Wellspring - Your Mental Wellness Journey',
+  title: 'MINDSTRIDE - Your Mental Wellness Journey',
   description: 'A comprehensive mental health support platform.',
 };
 
