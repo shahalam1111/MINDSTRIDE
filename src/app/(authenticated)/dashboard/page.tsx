@@ -73,6 +73,9 @@ export default function DashboardPage() {
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [personalizedInsight, setPersonalizedInsight] = useState<string | null>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState<boolean>(false);
+  const [displayStressLevel, setDisplayStressLevel] = useState<string>("Complete intake form");
+  const [displaySleepHours, setDisplaySleepHours] = useState<string>("Complete intake form");
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -91,8 +94,27 @@ export default function DashboardPage() {
     if (storedIntakeDataString) {
       setIntakeDataExists(true);
       parsedIntakeData = JSON.parse(storedIntakeDataString);
+
+      // Update Stress Level for display
+      if (typeof parsedIntakeData.currentStressLevel === 'number') {
+          const level = parsedIntakeData.currentStressLevel;
+          if (level <= 3) setDisplayStressLevel(`Low (${level}/10)`);
+          else if (level <= 7) setDisplayStressLevel(`Moderate (${level}/10)`);
+          else setDisplayStressLevel(`High (${level}/10)`);
+      } else {
+          setDisplayStressLevel("Not logged in intake");
+      }
+
+      // Update Sleep Hours for display
+      if (typeof parsedIntakeData.sleepPatterns === 'number') {
+          setDisplaySleepHours(`${parsedIntakeData.sleepPatterns} hours`);
+      } else {
+          setDisplaySleepHours("Not logged in intake");
+      }
+
     } else {
       setIntakeDataExists(false);
+      // Messages for displayStressLevel and displaySleepHours are already set by default
     }
     
     // Load mood log for header and insights
@@ -276,8 +298,8 @@ export default function DashboardPage() {
                  <span className="text-sm text-muted-foreground">{lastMood ? `Last mood: ${lastMood}` : 'Log your mood!'}</span>
             </div>
             <div className="space-y-2">
-                <p className="text-sm">Stress: <span className="font-semibold text-primary">Moderate</span> (Placeholder from Intake)</p>
-                <p className="text-sm">Sleep: <span className="font-semibold text-primary">7 hours</span> (Placeholder from Intake)</p>
+                <p className="text-sm">Stress: <span className="font-semibold text-primary">{displayStressLevel}</span></p>
+                <p className="text-sm">Sleep: <span className="font-semibold text-primary">{displaySleepHours}</span></p>
             </div>
           </CardContent>
           <CardFooter>
