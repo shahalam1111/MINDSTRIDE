@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Brain } from 'lucide-react';
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; // Added new logo
 
 const registerSchema = z.object({
   fullName: z.string().min(1, {message: "Full name is required."}).optional(),
@@ -62,7 +62,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-blue-100 py-12 px-4">
        <Link href="/" className="mb-8 flex items-center gap-2 text-2xl font-headline font-semibold text-primary hover:text-primary/80 transition-colors">
-        <Brain className="h-8 w-8" />
+        <MindstrideLogoIcon className="h-8 w-8" /> {/* Replaced Brain */}
         <span>MINDSTRIDE</span>
       </Link>
       <Card className="w-full max-w-lg shadow-xl">
@@ -189,3 +189,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

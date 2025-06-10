@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Brain } from 'lucide-react';
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; // Added new logo
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -50,7 +50,7 @@ export default function SignInPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-blue-100 p-4">
       <Link href="/" className="mb-8 flex items-center gap-2 text-2xl font-headline font-semibold text-primary hover:text-primary/80 transition-colors">
-        <Brain className="h-8 w-8" />
+        <MindstrideLogoIcon className="h-8 w-8" /> {/* Replaced Brain */}
         <span>MINDSTRIDE</span>
       </Link>
       <Card className="w-full max-w-md shadow-xl">
@@ -105,3 +105,5 @@ export default function SignInPage() {
     </div>
   );
 }
+
+    

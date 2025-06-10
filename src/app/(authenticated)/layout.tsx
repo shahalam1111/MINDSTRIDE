@@ -5,7 +5,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3, HelpCircle } from 'lucide-react'; // Added Users, Activity, BarChart3, HelpCircle icons
+import { LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3, HelpCircle } from 'lucide-react'; // Removed Brain
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; // Added new logo
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -117,7 +118,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center">
-          <Brain className="h-16 w-16 text-primary animate-pulse mb-4" />
+          <MindstrideLogoIcon className="h-16 w-16 text-primary animate-pulse mb-4" /> {/* Replaced Brain */}
           <p className="text-xl text-foreground">Loading your MINDSTRIDE experience...</p>
         </div>
       </div>
@@ -129,7 +130,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const sidebarContent = (
     <nav className="grid gap-2 text-lg font-medium">
       <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-3 text-primary transition-all hover:text-primary/80 mb-4" onClick={closeSheet}>
-        <Brain className="h-7 w-7" />
+        <MindstrideLogoIcon className="h-7 w-7" /> {/* Replaced Brain */}
         <span className="text-xl font-headline font-semibold">MINDSTRIDE</span>
       </Link>
       {navItems.map(item => (
@@ -151,7 +152,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
-              <Brain className="h-6 w-6" />
+              <MindstrideLogoIcon className="h-6 w-6" /> {/* Replaced Brain */}
               <span className="font-headline">MINDSTRIDE</span>
             </Link>
           </div>
@@ -235,3 +236,5 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     </div>
   );
 }
+
+    
