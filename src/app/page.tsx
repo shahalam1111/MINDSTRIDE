@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AgeVerificationDialog } from '@/components/app/age-verification-dialog';
-import { Zap, Users, ShieldCheck, Menu, Video } from 'lucide-react'; // Removed Brain
-import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; // Added new logo
+import { Zap, Users, ShieldCheck, Menu, Video, HelpCircle } from 'lucide-react'; 
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 
@@ -20,7 +20,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <MindstrideLogoIcon className="h-8 w-8 text-primary" /> {/* Replaced Brain */}
+            <MindstrideLogoIcon className="h-8 w-8 text-primary" /> 
             <span className="text-2xl font-headline font-semibold text-primary">MINDSTRIDE</span>
           </Link>
           <nav className="hidden md:flex gap-2">
@@ -29,6 +29,9 @@ export default function LandingPage() {
              </Button>
              <Button variant="ghost" asChild>
                <Link href="#about">About</Link>
+             </Button>
+             <Button variant="ghost" asChild>
+                <Link href="/faq">FAQ</Link>
              </Button>
              <Button variant="ghost" asChild>
                 <Link href="/contact">Contact</Link>
@@ -51,6 +54,7 @@ export default function LandingPage() {
               <nav className="flex flex-col gap-4 mt-8">
                 <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Features</Link>
                 <Link href="#about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">About</Link>
+                <Link href="/faq" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">FAQ</Link>
                 <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Contact</Link>
                 <hr className="my-2"/>
                 <Button variant="outline" asChild onClick={() => setIsMobileMenuOpen(false)}>
@@ -117,12 +121,12 @@ export default function LandingPage() {
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <Video className="h-12 w-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">Video Consultations</h3>
-                <p className="text-muted-foreground">Connect with licensed therapists securely (Coming Soon).</p>
+                <p className="text-muted-foreground">Connect with licensed therapists securely (Premium Feature).</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <Users className="h-12 w-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">Community Forum</h3>
-                <p className="text-muted-foreground">Share experiences and find support in an anonymized space (Coming Soon).</p>
+                <p className="text-muted-foreground">Share experiences and find support in an anonymized space.</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <ShieldCheck className="h-12 w-12 text-primary mb-4" />
@@ -147,7 +151,7 @@ export default function LandingPage() {
             </div>
             <div className="md:w-1/2">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold text-foreground mb-6 flex items-center justify-center md:justify-start gap-2">
-                <MindstrideLogoIcon className="h-8 w-8 text-primary" /> {/* Replaced Brain */}
+                <MindstrideLogoIcon className="h-8 w-8 text-primary" /> 
                 About MINDSTRIDE
               </h2>
               <p className="text-lg text-muted-foreground mb-4">
@@ -163,9 +167,10 @@ export default function LandingPage() {
 
       <footer className="py-8 bg-slate-900 text-slate-300 border-t border-slate-700">
         <div className="container mx-auto px-6 text-center">
-          <div className="flex justify-center gap-6 mb-4">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
             <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
             <Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
           <p>&copy; {new Date().getFullYear()} MINDSTRIDE. All rights reserved.</p>
@@ -182,5 +187,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    

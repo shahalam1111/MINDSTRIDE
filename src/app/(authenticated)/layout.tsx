@@ -5,8 +5,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3, HelpCircle } from 'lucide-react'; // Removed Brain
-import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; // Added new logo
+import { LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3, HelpCircle } from 'lucide-react'; 
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; 
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -62,9 +62,9 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
 
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('wellspringUserLoggedIn'); // Keep this key as is
-    const storedEmail = localStorage.getItem('wellspringUserEmail'); // Keep this key as is
-    const premiumStatus = localStorage.getItem('wellspringUserIsPremium'); // Keep this key as is
+    const loggedInUser = localStorage.getItem('wellspringUserLoggedIn'); 
+    const storedEmail = localStorage.getItem('wellspringUserEmail'); 
+    const premiumStatus = localStorage.getItem('wellspringUserIsPremium'); 
     
     if (!loggedInUser) {
       router.replace('/sign-in');
@@ -118,7 +118,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center">
-          <MindstrideLogoIcon className="h-16 w-16 text-primary animate-pulse mb-4" /> {/* Replaced Brain */}
+          <MindstrideLogoIcon className="h-16 w-16 text-primary animate-pulse mb-4" /> 
           <p className="text-xl text-foreground">Loading your MINDSTRIDE experience...</p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const sidebarContent = (
     <nav className="grid gap-2 text-lg font-medium">
       <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-3 text-primary transition-all hover:text-primary/80 mb-4" onClick={closeSheet}>
-        <MindstrideLogoIcon className="h-7 w-7" /> {/* Replaced Brain */}
+        <MindstrideLogoIcon className="h-7 w-7" /> 
         <span className="text-xl font-headline font-semibold">MINDSTRIDE</span>
       </Link>
       {navItems.map(item => (
@@ -152,7 +152,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
-              <MindstrideLogoIcon className="h-6 w-6" /> {/* Replaced Brain */}
+              <MindstrideLogoIcon className="h-6 w-6" /> 
               <span className="font-headline">MINDSTRIDE</span>
             </Link>
           </div>
@@ -212,6 +212,10 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
                >
                 Consultations {isPremiumUser && <Badge variant="outline" className="ml-2 border-yellow-500 text-yellow-600">Premium</Badge>}
               </DropdownMenuItem>
+               <DropdownMenuItem onClick={() => router.push('/faq')}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                FAQ
+              </DropdownMenuItem>
                <DropdownMenuItem onClick={() => router.push('/contact')}>
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Contact Support
@@ -236,5 +240,3 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     </div>
   );
 }
-
-    
