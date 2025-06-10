@@ -141,12 +141,11 @@ export default function LandingPage() {
           <div className="container mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
             <div className="md:w-1/2">
               <Image
-                src="https://placehold.co/600x400.png"
+                src="https://sdmntprsouthcentralus.oaiusercontent.com/files/00000000-a694-61f7-be9c-25ef1129634e/raw?se=2025-06-10T05%3A26%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=ecc5913d-eb45-54a9-8318-7730b49f6c56&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T10%3A38%3A45Z&ske=2025-06-10T10%3A38%3A45Z&sks=b&skv=2024-08-04&sig=1XlAvAWm%2BadF%2B4Y/ijThdUTFkouG%2Bn6p0ZPfXb6AeP0%3D"
                 alt="Hopeful illustration for mental wellness journey"
                 width={600}
                 height={400}
                 className="rounded-lg shadow-xl"
-                data-ai-hint="wellness journey hopeful progress"
               />
             </div>
             <div className="md:w-1/2">
