@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AgeVerificationDialog } from '@/components/app/age-verification-dialog';
-import { Zap, Users, ShieldCheck, Menu, Video, HelpCircle } from 'lucide-react'; 
-import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon'; 
+import { Zap, Users, ShieldCheck, Menu, Video, HelpCircle } from 'lucide-react';
+import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 
@@ -20,7 +20,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <MindstrideLogoIcon className="h-8 w-8 text-primary" /> 
+            <MindstrideLogoIcon className="h-8 w-8 text-primary" />
             <span className="text-2xl font-headline font-semibold text-primary">MINDSTRIDE</span>
           </Link>
           <nav className="hidden md:flex gap-2">
@@ -68,10 +68,11 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-grow">
-        <section className="relative py-20 md:py-32 bg-gradient-to-br from-background via-blue-50 to-accent/20">
-          <div className="absolute inset-0 opacity-20">
+        <section className="relative py-20 md:py-32">
+          {/* Background Image Layer */}
+          <div className="absolute inset-0">
             <Image
-              src="https://sdmntprcentralus.oaiusercontent.com/files/00000000-1548-61f5-b6c9-b2732460799d/raw?se=2025-06-10T05%3A42%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=8ea7873f-031b-5213-bb88-b939c62ce50b&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T22%3A15%3A05Z&ske=2025-06-10T22%3A15%3A05Z&sks=b&skv=2024-08-04&sig=%2BzKNlIz%2BzRLWgzg66aLBsTIpM4stU4o3HvddclAk8jg%3D" 
+              src="https://sdmntprcentralus.oaiusercontent.com/files/00000000-1548-61f5-b6c9-b2732460799d/raw?se=2025-06-10T05%3A42%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=8ea7873f-031b-5213-bb88-b939c62ce50b&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T22%3A15%3A05Z&ske=2025-06-10T22%3A15%3A05Z&sks=b&skv=2024-08-04&sig=%2BzKNlIz%2BzRLWgzg66aLBsTIpM4stU4o3HvddclAk8jg%3D"
               alt="Abstract calming background"
               layout="fill"
               objectFit="cover"
@@ -80,7 +81,12 @@ export default function LandingPage() {
               data-ai-hint="calming abstract"
             />
           </div>
-          <div className="container mx-auto px-6 text-center relative z-10">
+
+          {/* Overlay for readability */}
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm"></div>
+
+          {/* Text Content Layer */}
+          <div className="container mx-auto px-6 text-center relative">
             <h1 className="text-4xl md:text-6xl font-headline font-bold text-foreground mb-6">
               Your Mental Wellness Journey Starts Here
             </h1>
@@ -151,7 +157,7 @@ export default function LandingPage() {
             </div>
             <div className="md:w-1/2">
               <h2 className="text-3xl md:text-4xl font-headline font-semibold text-foreground mb-6 flex items-center justify-center md:justify-start gap-2">
-                <MindstrideLogoIcon className="h-8 w-8 text-primary" /> 
+                <MindstrideLogoIcon className="h-8 w-8 text-primary" />
                 About MINDSTRIDE
               </h2>
               <p className="text-lg text-muted-foreground mb-4">
