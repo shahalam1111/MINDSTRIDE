@@ -82,17 +82,12 @@ export default function LandingPage() {
             />
           </div>
 
-          {/* Overlay for readability */}
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm"></div>
+          {/* Overlay for readability - more subtle */}
+          <div className="absolute inset-0 bg-black/10"></div>
 
-          {/* Text Content Layer */}
-          <div className="container mx-auto px-6 text-center relative">
-            <h1 className="text-4xl md:text-6xl font-headline font-bold text-foreground mb-6">
-              Your Mental Wellness Journey Starts Here
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              MINDSTRIDE provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
-            </p>
+          {/* Content Layer - Only Buttons */}
+          <div className="container mx-auto px-6 text-center relative h-full flex flex-col justify-center items-center">
+            {/* Heading and Subtext Removed */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button
                 size="lg"
