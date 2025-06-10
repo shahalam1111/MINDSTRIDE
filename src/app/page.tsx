@@ -71,13 +71,13 @@ export default function LandingPage() {
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-background via-blue-50 to-accent/20">
           <div className="absolute inset-0 opacity-20">
             <Image
-              src="https://placehold.co/1920x1080.png" 
+              src="https://sdmntprcentralus.oaiusercontent.com/files/00000000-1548-61f5-b6c9-b2732460799d/raw?se=2025-06-10T05%3A42%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=8ea7873f-031b-5213-bb88-b939c62ce50b&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T22%3A15%3A05Z&ske=2025-06-10T22%3A15%3A05Z&sks=b&skv=2024-08-04&sig=%2BzKNlIz%2BzRLWgzg66aLBsTIpM4stU4o3HvddclAk8jg%3D" 
               alt="Abstract calming background"
               layout="fill"
               objectFit="cover"
               quality={75}
               priority
-              data-ai-hint="calm abstract"
+              data-ai-hint="calming abstract"
             />
           </div>
           <div className="container mx-auto px-6 text-center relative z-10">
@@ -146,6 +146,7 @@ export default function LandingPage() {
                 width={600}
                 height={400}
                 className="rounded-lg shadow-xl"
+                data-ai-hint="wellness journey hopeful progress"
               />
             </div>
             <div className="md:w-1/2">
