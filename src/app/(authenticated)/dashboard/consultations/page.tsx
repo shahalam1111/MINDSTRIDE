@@ -28,7 +28,15 @@ function TherapistCard({ therapist }: { therapist: Therapist }) {
   return (
     <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="p-0">
-        <Image src={therapist.imageUrl} alt={therapist.name} width={300} height={200} className="w-full h-48 object-cover" data-ai-hint="person professional" />
+        <div className="relative w-full aspect-square overflow-hidden">
+          <Image
+            src={therapist.imageUrl}
+            alt={therapist.name}
+            layout="fill"
+            objectFit="cover"
+            data-ai-hint="person professional"
+          />
+        </div>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
         <CardTitle className="text-xl mb-1">{therapist.name}</CardTitle>
