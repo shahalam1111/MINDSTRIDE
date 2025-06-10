@@ -152,7 +152,7 @@ export default function PostViewPage() {
               <AvatarFallback>{post.author.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <span>Posted by <span className="font-medium text-foreground">{post.author}</span></span>
-            <span>in <Badge variant="secondary" asChild><Link href={`/dashboard/community/category/${post.categoryId}`}>{post.categoryName}</Link></Badge></span>
+            <span>in <Link href={`/dashboard/community/category/${post.categoryId}`} className="hover:underline"><Badge variant="secondary">{post.categoryName}</Badge></Link></span>
             <span>{formatDistanceToNow(parseISO(post.timestamp), { addSuffix: true })}</span>
           </div>
           <div className="mt-2 flex gap-1 flex-wrap">
