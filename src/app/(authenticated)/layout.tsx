@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, ListChecks, Activity } from 'lucide-react'; // Added Video, ListChecks icons
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity } from 'lucide-react'; // Added Users icon
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -61,9 +61,9 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
 
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('wellspringUserLoggedIn');
-    const storedEmail = localStorage.getItem('wellspringUserEmail');
-    const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
+    const loggedInUser = localStorage.getItem('wellspringUserLoggedIn'); // Keep this key as is
+    const storedEmail = localStorage.getItem('wellspringUserEmail'); // Keep this key as is
+    const premiumStatus = localStorage.getItem('wellspringUserIsPremium'); // Keep this key as is
     
     if (!loggedInUser) {
       router.replace('/sign-in');
@@ -84,6 +84,12 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     localStorage.removeItem('wellspringUserIsPremium');
     localStorage.removeItem('wellspringUserLastAiChatActivity');
     localStorage.removeItem('wellspringUserAiChatHistory');
+    // Clear community localStorage on logout
+    const communityPostsKey = 'mindstrideUserForumPosts'; // Use the correct key from community-data.ts
+    localStorage.removeItem(communityPostsKey);
+    // Potentially iterate and remove comment keys if necessary, or handle stale data on load.
+    // For simplicity, only removing posts key for now.
+    
     setIsAuthenticated(false); 
     router.replace('/');
   };
@@ -95,7 +101,8 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     { href: "/dashboard/intake", icon: FileText, label: "Intake Form" },
     { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
     { href: "/dashboard/activity", icon: Activity, label: "Activity Log"},
-    { href: "/dashboard/consultations", icon: Video, label: "Consultations", isPremiumFeature: true, disabled: !isPremiumUser },
+    { href: "/dashboard/community", icon: Users, label: "Community Forum" }, // New item
+    { href: "/dashboard/consultations", icon: Video, label: "Consultations", isPremiumFeature: true },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },
     // { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
@@ -180,7 +187,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src={`https://placehold.co/40x40.png?text=${userInitial}`} alt={userEmail || "User"} data-ai-hint="person initial" />
+                  <AvatarImage src={`https://placehold.co/40x40.png?text=${userInitial}`} alt={userEmail || "User"} data-ai-hint="person initial"/>
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>

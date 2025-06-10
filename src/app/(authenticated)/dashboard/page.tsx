@@ -349,9 +349,11 @@ export default function DashboardPage() {
                 Schedule
                 <Badge variant="outline" className={`absolute top-1 right-1 text-xs px-1 py-0.5 ${isPremiumUser ? 'border-yellow-500 text-yellow-600' : 'border-muted-foreground text-muted-foreground'}`}>Premium</Badge>
             </Button>
-             <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
-              <Users className="h-6 w-6 mb-1" />
-              Community
+             <Button variant="secondary" className="h-auto py-3 flex-col" asChild>
+                <Link href="/dashboard/community">
+                    <Users className="h-6 w-6 mb-1" />
+                    Community
+                </Link>
             </Button>
              <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
               <BarChart3 className="h-6 w-6 mb-1" />
