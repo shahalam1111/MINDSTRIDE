@@ -17,31 +17,40 @@ interface BlogItem {
   title: string;
   thumbnailUrl: string;
   blogUrl: string;
-  dataAiHint?: string;
+  // dataAiHint is removed as we are using specific images now
 }
 
 const latestBlogs: BlogItem[] = [
   {
     id: 'blog-1',
-    title: 'Understanding Mindfulness: A Beginner\'s Guide to Inner Peace',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'mindfulness meditation',
-    blogUrl: '#blog-link-1', // Placeholder URL
+    title: "Mindfulness Meditation",
+    thumbnailUrl: "https://www.apa.org/images/tile-stress-mindfulness-meditation_tcm7-264379.jpg",
+    blogUrl: "https://www.apa.org/topics/mindfulness/meditation"
   },
   {
     id: 'blog-2',
-    title: '5 Simple Habits for a Healthier and More Productive Mind',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'healthy habits brain',
-    blogUrl: '#blog-link-2', // Placeholder URL
+    title: "7 Great Benefits of Mindfulness in Positive Psychology",
+    thumbnailUrl: "https://neurologyoffice.com/wp-content/uploads/Mindfulness_Neurologist.png",
+    blogUrl: "https://positivepsychology.com/mindfulness-positive-psychology-3-great-insights/"
   },
   {
     id: 'blog-3',
-    title: 'Coping with Stress: Practical Techniques for a Calmer Life',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'stress relief nature',
-    blogUrl: '#blog-link-3', // Placeholder URL
+    title: "12 Tips for Maintaining a Healthy Lifestyle",
+    thumbnailUrl: "https://static.wixstatic.com/media/96c1c0_a9d1adb474ed413db862ac5d27462c5f~mv2.png/v1/fill/w_568,h_320,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/96c1c0_a9d1adb474ed413db862ac5d27462c5f~mv2.png",
+    blogUrl: "https://www.healthline.com/health/how-to-maintain-a-healthy-lifestyle"
   },
+  {
+    id: 'blog-4',
+    title: "How To Be Successful: Essential Tips for Success in Life",
+    thumbnailUrl: "https://assets.speareducation.com/userfiles/Imtiaz/success.jpg",
+    blogUrl: "https://www.shopify.com/in/blog/how-to-become-successful"
+  },
+  {
+    id: 'blog-5',
+    title: "10 Tips for Dealing with Someone's Narcissistic Personality Traits",
+    thumbnailUrl: "https://media.post.rvohealth.io/wp-content/uploads/2024/02/annoyed-stressed-couple-sitting-on-couch-facebook.jpg",
+    blogUrl: "https://www.healthline.com/health/how-to-deal-with-a-narcissist"
+  }
 ];
 
 interface VideoItem {
@@ -219,7 +228,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="content-showcase" className="py-16 md:py-24 bg-background">
+        <section id="content-showcase" className="py-16 md:py-24 bg-card">
           <div className="container mx-auto px-4 md:px-6">
             {/* Latest Blogs Subsection */}
             <div id="latest-blogs">
@@ -229,7 +238,7 @@ export default function LandingPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {latestBlogs.map((blog) => (
-                  <Card key={blog.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                  <Card key={blog.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-background">
                     <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="block group">
                       <div className="relative w-full aspect-video">
                         <Image
@@ -238,7 +247,7 @@ export default function LandingPage() {
                           layout="fill"
                           objectFit="cover"
                           className="group-hover:scale-105 transition-transform duration-300"
-                          data-ai-hint={blog.dataAiHint}
+                          // data-ai-hint attribute removed for specific images
                         />
                       </div>
                     </Link>
@@ -269,7 +278,7 @@ export default function LandingPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {featuredVideos.map((video) => (
-                  <Card key={video.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                  <Card key={video.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-background">
                      <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block group">
                       <div className="relative w-full aspect-video">
                         <Image
