@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFirestore, type Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 // import { getAuth } from "firebase/auth"; // For future Firebase Auth integration
 // import { getStorage } from "firebase/storage"; // For future Firebase Storage integration
 
@@ -15,18 +15,34 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let db: Firestore;
-// let auth; // For future Firebase Auth integration
-// let storage; // For future Firebase Storage integration
+let dbInstance: Firestore;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
+  dbInstance = getFirestore(app);
+  enableIndexedDbPersistence(dbInstance, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
+    .then(() => {
+      console.log("Firestore offline persistence enabled successfully.");
+    })
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn(
+          "MINDSTRIDE: Firestore offline persistence failed. This can happen if multiple tabs are open or due to other browser limitations. Data might not be available offline in this tab."
+        );
+      } else if (err.code === 'unimplemented') {
+        console.warn(
+          "MINDSTRIDE: Firestore offline persistence is not supported in this browser environment. Data will not be available offline."
+        );
+      } else {
+        console.error("MINDSTRIDE: An unexpected error occurred while enabling Firestore offline persistence: ", err);
+      }
+    });
 } else {
   app = getApps()[0];
+  // If app is already initialized, get the Firestore instance.
+  // Persistence should have been enabled by the first initializer.
+  dbInstance = getFirestore(app); 
 }
 
-db = getFirestore(app);
-// auth = getAuth(app); // For future Firebase Auth integration
-// storage = getStorage(app); // For future Firebase Storage integration
-
-export { app, db /*, auth, storage */ };
+export const db = dbInstance;
+export { app /*, auth, storage */ };
