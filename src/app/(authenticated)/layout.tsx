@@ -22,6 +22,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuPortal, // Added DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
@@ -331,5 +332,3 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     </div>
   );
 }
-
-    
