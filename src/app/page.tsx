@@ -6,9 +6,75 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AgeVerificationDialog } from '@/components/app/age-verification-dialog';
-import { Zap, Users, ShieldCheck, Menu, Video, HelpCircle } from 'lucide-react';
+import { Zap, Users, ShieldCheck, Menu, Video, HelpCircle, BookOpen, Youtube, ExternalLink, PlayCircle } from 'lucide-react';
 import { MindstrideLogoIcon } from '@/components/icons/mindstride-logo-icon';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+
+
+interface BlogItem {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  blogUrl: string;
+  dataAiHint?: string;
+}
+
+const latestBlogs: BlogItem[] = [
+  {
+    id: 'blog-1',
+    title: 'Understanding Mindfulness: A Beginner\'s Guide to Inner Peace',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'mindfulness meditation',
+    blogUrl: '#blog-link-1', // Placeholder URL
+  },
+  {
+    id: 'blog-2',
+    title: '5 Simple Habits for a Healthier and More Productive Mind',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'healthy habits brain',
+    blogUrl: '#blog-link-2', // Placeholder URL
+  },
+  {
+    id: 'blog-3',
+    title: 'Coping with Stress: Practical Techniques for a Calmer Life',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'stress relief nature',
+    blogUrl: '#blog-link-3', // Placeholder URL
+  },
+];
+
+interface VideoItem {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  videoUrl: string;
+  dataAiHint?: string;
+}
+
+const featuredVideos: VideoItem[] = [
+  {
+    id: 'video-1',
+    title: 'Guided Meditation for Anxiety Relief (10 Minutes)',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'meditation video calm',
+    videoUrl: 'https://www.youtube.com/watch?v=example1', // Placeholder URL
+  },
+  {
+    id: 'video-2',
+    title: 'Expert Talk: The Science of Happiness and Well-being',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'expert talk science',
+    videoUrl: 'https://www.youtube.com/watch?v=example2', // Placeholder URL
+  },
+  {
+    id: 'video-3',
+    title: 'Effective Breathing Exercises for Instant Calm and Focus',
+    thumbnailUrl: 'https://placehold.co/600x400.png',
+    dataAiHint: 'breathing exercise person',
+    videoUrl: 'https://www.youtube.com/watch?v=example3', // Placeholder URL
+  },
+];
 
 
 export default function LandingPage() {
@@ -69,7 +135,6 @@ export default function LandingPage() {
 
       <main className="flex-grow">
         <section className="relative min-h-[calc(100vh-4rem)]">
-          {/* Background Image Layer */}
           <div className="absolute inset-0">
             <Image
               src="https://sdmntprcentralus.oaiusercontent.com/files/00000000-1548-61f5-b6c9-b2732460799d/raw?se=2025-06-10T05%3A42%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=8ea7873f-031b-5213-bb88-b939c62ce50b&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T22%3A15%3A05Z&ske=2025-06-10T22%3A15%3A05Z&sks=b&skv=2024-08-04&sig=%2BzKNlIz%2BzRLWgzg66aLBsTIpM4stU4o3HvddclAk8jg%3D"
@@ -81,21 +146,103 @@ export default function LandingPage() {
               data-ai-hint="calming abstract"
             />
           </div>
-
-          {/* Overlay for readability */}
           <div className="absolute inset-0 bg-black/10"></div>
-
-          {/* Content Layer - Subtext at the bottom */}
-          <div className="relative h-full flex flex-col justify-end items-center px-4 md:px-6 pb-12 sm:pb-16 text-center">
+          <div className="relative h-full flex flex-col justify-end items-center px-4 md:px-6 pb-16 sm:pb-20 text-center">
             <p className="text-md sm:text-lg text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto [text-shadow:_0_1px_2px_rgb(0_0_0_/_0.4)]">
               MINDSTRIDE provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
             </p>
-            {/* Buttons removed from here */}
+          </div>
+        </section>
+
+        <section id="content-showcase" className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4 md:px-6">
+            {/* Latest Blogs Subsection */}
+            <div id="latest-blogs">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
+                <BookOpen className="h-8 w-8 text-primary" />
+                Latest Blogs
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {latestBlogs.map((blog) => (
+                  <Card key={blog.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                    <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                      <div className="relative w-full aspect-video">
+                        <Image
+                          src={blog.thumbnailUrl}
+                          alt={blog.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="group-hover:scale-105 transition-transform duration-300"
+                          data-ai-hint={blog.dataAiHint}
+                        />
+                      </div>
+                    </Link>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                          {blog.title}
+                        </Link>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button asChild variant="outline" className="w-full">
+                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer">
+                          Read Full Blog <ExternalLink className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Featured Videos Subsection */}
+            <div id="featured-videos" className="mt-16 md:mt-24">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
+                <Youtube className="h-8 w-8 text-primary" />
+                Featured Videos
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredVideos.map((video) => (
+                  <Card key={video.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                     <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                      <div className="relative w-full aspect-video">
+                        <Image
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="group-hover:scale-105 transition-transform duration-300"
+                          data-ai-hint={video.dataAiHint}
+                        />
+                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <PlayCircle className="h-16 w-16 text-white/80" />
+                        </div>
+                      </div>
+                    </Link>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                          {video.title}
+                        </Link>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button asChild className="w-full">
+                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer">
+                          Watch Video <PlayCircle className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
         <section id="features" className="py-16 md:py-24 bg-card">
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12">
               Features Designed For You
             </h2>
@@ -125,7 +272,7 @@ export default function LandingPage() {
         </section>
 
         <section id="about" className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
+          <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center gap-12">
             <div className="md:w-1/2">
               <Image
                 src="https://sdmntprsouthcentralus.oaiusercontent.com/files/00000000-a694-61f7-be9c-25ef1129634e/raw?se=2025-06-10T05%3A26%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=ecc5913d-eb45-54a9-8318-7730b49f6c56&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T10%3A38%3A45Z&ske=2025-06-10T10%3A38%3A45Z&sks=b&skv=2024-08-04&sig=1XlAvAWm%2BadF%2B4Y/ijThdUTFkouG%2Bn6p0ZPfXb6AeP0%3D"
@@ -153,7 +300,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="py-8 bg-slate-900 text-slate-300 border-t border-slate-700">
-        <div className="container mx-auto px-6 text-center">
+        <div className="container mx-auto px-4 md:px-6 text-center">
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
             <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
@@ -174,3 +321,6 @@ export default function LandingPage() {
     </div>
   );
 }
+
+
+    
