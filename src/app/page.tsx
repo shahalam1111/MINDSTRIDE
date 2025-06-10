@@ -91,10 +91,10 @@ export default function LandingPage() {
           </Link>
           <nav className="hidden md:flex gap-2">
              <Button variant="ghost" asChild>
-               <Link href="#latest-blogs">Latest Blogs</Link>
+               <Link href="#latest-blogs">Mindful Reads</Link>
              </Button>
              <Button variant="ghost" asChild>
-               <Link href="#featured-videos">Featured Content</Link>
+               <Link href="#featured-videos">Voices That Matter</Link>
              </Button>
              <Button variant="ghost" asChild>
                <Link href="#features">Features</Link>
@@ -124,8 +124,8 @@ export default function LandingPage() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background">
               <nav className="flex flex-col gap-4 mt-8">
-                <Link href="#latest-blogs" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Latest Blogs</Link>
-                <Link href="#featured-videos" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Featured Content</Link>
+                <Link href="#latest-blogs" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Mindful Reads</Link>
+                <Link href="#featured-videos" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Voices That Matter</Link>
                 <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Features</Link>
                 <Link href="#about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">About</Link>
                 <Link href="/faq" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">FAQ</Link>
@@ -159,93 +159,6 @@ export default function LandingPage() {
             <p className="text-md sm:text-lg text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto [text-shadow:_0_1px_2px_rgb(0_0_0_/_0.4)]">
               MINDSTRIDE provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
             </p>
-          </div>
-        </section>
-
-        <section id="content-showcase" className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4 md:px-6">
-            {/* Latest Blogs Subsection */}
-            <div id="latest-blogs">
-              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
-                <BookOpen className="h-8 w-8 text-primary" />
-                Latest Blogs
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {latestBlogs.map((blog) => (
-                  <Card key={blog.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
-                    <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="block group">
-                      <div className="relative w-full aspect-video">
-                        <Image
-                          src={blog.thumbnailUrl}
-                          alt={blog.title}
-                          layout="fill"
-                          objectFit="cover"
-                          className="group-hover:scale-105 transition-transform duration-300"
-                          data-ai-hint={blog.dataAiHint}
-                        />
-                      </div>
-                    </Link>
-                    <CardHeader className="flex-grow">
-                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
-                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
-                          {blog.title}
-                        </Link>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardFooter>
-                      <Button asChild variant="outline" className="w-full">
-                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer">
-                          Read Full Blog <ExternalLink className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Featured Videos Subsection */}
-            <div id="featured-videos" className="mt-16 md:mt-24">
-              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
-                <Youtube className="h-8 w-8 text-primary" />
-                Featured Videos
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {featuredVideos.map((video) => (
-                  <Card key={video.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
-                     <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block group">
-                      <div className="relative w-full aspect-video">
-                        <Image
-                          src={video.thumbnailUrl}
-                          alt={video.title}
-                          layout="fill"
-                          objectFit="cover"
-                          className="group-hover:scale-105 transition-transform duration-300"
-                          data-ai-hint={video.dataAiHint}
-                        />
-                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <PlayCircle className="h-16 w-16 text-white/80" />
-                        </div>
-                      </div>
-                    </Link>
-                    <CardHeader className="flex-grow">
-                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
-                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
-                          {video.title}
-                        </Link>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardFooter>
-                      <Button asChild className="w-full">
-                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer">
-                          Watch Video <PlayCircle className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
           </div>
         </section>
 
@@ -305,6 +218,93 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section id="content-showcase" className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4 md:px-6">
+            {/* Latest Blogs Subsection */}
+            <div id="latest-blogs">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
+                <BookOpen className="h-8 w-8 text-primary" />
+                Mindful Reads
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {latestBlogs.map((blog) => (
+                  <Card key={blog.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                    <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                      <div className="relative w-full aspect-video">
+                        <Image
+                          src={blog.thumbnailUrl}
+                          alt={blog.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="group-hover:scale-105 transition-transform duration-300"
+                          data-ai-hint={blog.dataAiHint}
+                        />
+                      </div>
+                    </Link>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                          {blog.title}
+                        </Link>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button asChild variant="outline" className="w-full">
+                        <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer">
+                          Read Full Blog <ExternalLink className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Featured Videos Subsection */}
+            <div id="featured-videos" className="mt-16 md:mt-24">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-center text-foreground mb-12 flex items-center justify-center gap-3">
+                <Youtube className="h-8 w-8 text-primary" />
+                Voices That Matter
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredVideos.map((video) => (
+                  <Card key={video.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+                     <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                      <div className="relative w-full aspect-video">
+                        <Image
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          layout="fill"
+                          objectFit="cover"
+                          className="group-hover:scale-105 transition-transform duration-300"
+                          data-ai-hint={video.dataAiHint}
+                        />
+                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <PlayCircle className="h-16 w-16 text-white/80" />
+                        </div>
+                      </div>
+                    </Link>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                          {video.title}
+                        </Link>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button asChild className="w-full">
+                        <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer">
+                          Watch Video <PlayCircle className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="py-8 bg-slate-900 text-slate-300 border-t border-slate-700">
@@ -329,8 +329,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-
-    
-
-    
