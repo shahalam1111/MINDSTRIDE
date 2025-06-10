@@ -377,9 +377,11 @@ export default function DashboardPage() {
                     Community
                 </Link>
             </Button>
-             <Button variant="secondary" className="h-auto py-3 flex-col" disabled>
-              <BarChart3 className="h-6 w-6 mb-1" />
-              My Progress
+             <Button variant="secondary" className="h-auto py-3 flex-col" asChild>
+                <Link href="/dashboard/progress">
+                    <BarChart3 className="h-6 w-6 mb-1" />
+                    My Progress
+                </Link>
             </Button>
           </CardContent>
            <CardFooter>

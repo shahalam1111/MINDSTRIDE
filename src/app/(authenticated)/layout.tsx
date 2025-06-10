@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity } from 'lucide-react'; // Added Users icon
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3 } from 'lucide-react'; // Added Users, Activity, BarChart3 icons
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -85,10 +85,14 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     localStorage.removeItem('wellspringUserLastAiChatActivity');
     localStorage.removeItem('wellspringUserAiChatHistory');
     // Clear community localStorage on logout
-    const communityPostsKey = 'mindstrideUserForumPosts'; // Use the correct key from community-data.ts
+    const communityPostsKey = 'mindstrideUserForumPosts'; 
     localStorage.removeItem(communityPostsKey);
-    // Potentially iterate and remove comment keys if necessary, or handle stale data on load.
-    // For simplicity, only removing posts key for now.
+    // Clear all comment keys
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('mindstrideUserForumComments_')) {
+            localStorage.removeItem(key);
+        }
+    });
     
     setIsAuthenticated(false); 
     router.replace('/');
@@ -100,8 +104,9 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/dashboard/intake", icon: FileText, label: "Intake Form" },
     { href: "/dashboard/mood-checkin", icon: SmilePlus, label: "Mood Check-in" },
+    { href: "/dashboard/progress", icon: BarChart3, label: "My Progress"},
     { href: "/dashboard/activity", icon: Activity, label: "Activity Log"},
-    { href: "/dashboard/community", icon: Users, label: "Community Forum" }, // New item
+    { href: "/dashboard/community", icon: Users, label: "Community Forum" },
     { href: "/dashboard/consultations", icon: Video, label: "Consultations", isPremiumFeature: true },
     // { href: "/dashboard/profile", icon: UserCircle, label: "Profile" },
     // { href: "/dashboard/settings", icon: Settings, label: "Settings" },
