@@ -16,6 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase'; // Import Firestore instance
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 
 const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'] as const;
 const TIMEZONE_OPTIONS = [
@@ -98,6 +100,8 @@ const intakeFormSchema = z.object({
 
 type IntakeFormValues = z.infer<typeof intakeFormSchema>;
 
+const USER_ID_PLACEHOLDER = "mockUserId"; // Replace with actual user ID from Firebase Auth later
+
 export default function IntakeFormPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -132,7 +136,8 @@ export default function IntakeFormPage() {
   const diagnosesValue = form.watch('diagnoses');
   const selectedTodayMood = form.watch('todayMood');
 
-  const onSubmit = (data: IntakeFormValues) => {
+  const onSubmit = async (data: IntakeFormValues) => {
+    form.formState.isSubmitting = true;
     try {
       let finalDiagnoses: string[] = data.diagnoses || [];
       if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other')) {
@@ -146,17 +151,23 @@ export default function IntakeFormPage() {
         ...data,
         location: `${data.city}, ${data.timezone}`,
         diagnoses: finalDiagnoses,
-        // Ensure numeric fields that might come from coerce are numbers
         age: Number(data.age),
         sleepPatterns: Number(data.sleepPatterns),
         currentStressLevel: Number(data.currentStressLevel),
+        updatedAt: serverTimestamp(), // For Firestore
       };
-      // remove city and timezone as they are combined into location
+      
       const { city, timezone, otherDiagnosis, ...payloadToStore } = processedData;
 
-
+      // Save to localStorage (can be kept as a fallback or removed later)
       localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStore));
-      console.log("Intake Form Data:", payloadToStore);
+      
+      // Save to Firestore
+      // IMPORTANT: USER_ID_PLACEHOLDER must be replaced with actual Firebase Auth user.uid in a real app
+      const userIntakeDocRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
+      await setDoc(userIntakeDocRef, payloadToStore, { merge: true }); // Use merge:true to update if exists
+
+      console.log("Intake Form Data saved to localStorage and Firestore:", payloadToStore);
       toast({
         title: "Intake Form Submitted",
         description: "Your information has been saved. We'll use this to personalize your experience.",
@@ -169,6 +180,8 @@ export default function IntakeFormPage() {
         description: "Failed to save your intake form. Please try again.",
         variant: "destructive",
       });
+    } finally {
+       form.formState.isSubmitting = false;
     }
   };
 
