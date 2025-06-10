@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3 } from 'lucide-react'; // Added Users, Activity, BarChart3 icons
+import { Brain, LogOut, Settings, UserCircle, LayoutDashboard, SmilePlus, FileText, Video, Users, Activity, BarChart3, HelpCircle } from 'lucide-react'; // Added Users, Activity, BarChart3, HelpCircle icons
 import { Toaster } from "@/components/ui/toaster";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -211,12 +211,19 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
                >
                 Consultations {isPremiumUser && <Badge variant="outline" className="ml-2 border-yellow-500 text-yellow-600">Premium</Badge>}
               </DropdownMenuItem>
+               <DropdownMenuItem onClick={() => router.push('/contact')}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Contact Support
+              </DropdownMenuItem>
               {/* 
                 <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>Profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>Settings</DropdownMenuItem>
               */}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast'; // Changed
+import { useToast } from '@/hooks/use-toast'; 
 import React from 'react';
 
 
 export default function ContactPage() {
-  const { toast } = useToast(); // Changed
+  const { toast } = useToast(); 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,7 +24,7 @@ export default function ContactPage() {
     // In a real app, you would send this data to an API endpoint.
     // For now, we just show a toast.
 
-    toast({ // Changed
+    toast({ 
       title: "Message Sent (Placeholder)",
       description: "Thank you for your message! We'll review it shortly. (This is a simulation as the backend is not implemented).",
     });
