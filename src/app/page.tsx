@@ -142,11 +142,11 @@ export default function LandingPage() {
             <div className="md:w-1/2">
               <Image
                 src="https://placehold.co/600x400.png"
-                alt="Person meditating peacefully"
+                alt="Hopeful illustration for mental wellness journey"
                 width={600}
                 height={400}
                 className="rounded-lg shadow-xl"
-                data-ai-hint="peaceful meditation"
+                data-ai-hint="wellness journey hopeful progress"
               />
             </div>
             <div className="md:w-1/2">
@@ -187,3 +187,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
