@@ -68,7 +68,7 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-grow">
-        <section className="relative py-20 md:py-32">
+        <section className="relative min-h-[calc(100vh-4rem)]"> {/* Adjusted height, removed padding */}
           {/* Background Image Layer */}
           <div className="absolute inset-0">
             <Image
@@ -82,12 +82,12 @@ export default function LandingPage() {
             />
           </div>
 
-          {/* Overlay for readability - more subtle */}
+          {/* Overlay for readability */}
           <div className="absolute inset-0 bg-black/10"></div>
 
           {/* Content Layer - Only Buttons */}
-          <div className="container mx-auto px-6 text-center relative h-full flex flex-col justify-center items-center">
-            {/* Heading and Subtext Removed */}
+          {/* Adjusted for bottom-center alignment and removed container mx-auto */}
+          <div className="relative h-full flex flex-col justify-end items-center px-6 pb-16 sm:pb-20 text-center">
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button
                 size="lg"
@@ -189,3 +189,4 @@ export default function LandingPage() {
   );
 }
 
+    
