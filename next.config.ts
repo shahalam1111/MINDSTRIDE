@@ -58,9 +58,17 @@ const nextConfig: NextConfig = {
         hostname: 'media.post.rvohealth.io',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
 };
 
 export default nextConfig;
+
+    

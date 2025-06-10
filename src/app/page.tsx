@@ -17,7 +17,6 @@ interface BlogItem {
   title: string;
   thumbnailUrl: string;
   blogUrl: string;
-  // dataAiHint is removed as we are using specific images now
 }
 
 const latestBlogs: BlogItem[] = [
@@ -63,26 +62,35 @@ interface VideoItem {
 
 const featuredVideos: VideoItem[] = [
   {
-    id: 'video-1',
-    title: 'Guided Meditation for Anxiety Relief (10 Minutes)',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'meditation video calm',
-    videoUrl: 'https://www.youtube.com/watch?v=example1', // Placeholder URL
+    id: 'yt-video-1',
+    title: "How to cope with anxiety | Olivia Remes | TEDxUHasselt",
+    thumbnailUrl: "https://i.ytimg.com/vi/WWloIAQpMcQ/maxresdefault.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=WWloIAQpMcQ"
   },
   {
-    id: 'video-2',
-    title: 'Expert Talk: The Science of Happiness and Well-being',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'expert talk science',
-    videoUrl: 'https://www.youtube.com/watch?v=example2', // Placeholder URL
+    id: 'yt-video-2',
+    title: "What is depression? - Helen M. Farrell",
+    thumbnailUrl: "https://i.ytimg.com/vi/z-IR48Mb3W0/maxresdefault.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=z-IR48Mb3W0"
   },
   {
-    id: 'video-3',
-    title: 'Effective Breathing Exercises for Instant Calm and Focus',
-    thumbnailUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'breathing exercise person',
-    videoUrl: 'https://www.youtube.com/watch?v=example3', // Placeholder URL
+    id: 'yt-video-3',
+    title: "How to make stress your friend | Kelly McGonigal",
+    thumbnailUrl: "https://i.ytimg.com/vi/RcGyVTAoXEU/maxresdefault.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=RcGyVTAoXEU"
   },
+  {
+    id: 'yt-video-4',
+    title: "Sleep is your superpower | Matt Walker",
+    thumbnailUrl: "https://i.ytimg.com/vi/5MuIMqhT8DM/maxresdefault.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=5MuIMqhT8DM"
+  },
+  {
+    id: 'yt-video-5',
+    title: "Kristin Neff: The Three Components of Self-Compassion",
+    thumbnailUrl: "https://i.ytimg.com/vi/11U0h0DPu7k/maxresdefault.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=11U0h0DPu7k"
+  }
 ];
 
 
@@ -247,12 +255,11 @@ export default function LandingPage() {
                           layout="fill"
                           objectFit="cover"
                           className="group-hover:scale-105 transition-transform duration-300"
-                          // data-ai-hint attribute removed for specific images
                         />
                       </div>
                     </Link>
                     <CardHeader className="flex-grow">
-                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                      <CardTitle className="text-lg line-clamp-2 h-14">
                         <Link href={blog.blogUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                           {blog.title}
                         </Link>
@@ -287,7 +294,6 @@ export default function LandingPage() {
                           layout="fill"
                           objectFit="cover"
                           className="group-hover:scale-105 transition-transform duration-300"
-                          data-ai-hint={video.dataAiHint}
                         />
                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <PlayCircle className="h-16 w-16 text-white/80" />
@@ -295,7 +301,7 @@ export default function LandingPage() {
                       </div>
                     </Link>
                     <CardHeader className="flex-grow">
-                      <CardTitle className="text-lg line-clamp-2 h-14"> {/* Approx height for 2 lines */}
+                      <CardTitle className="text-lg line-clamp-2 h-14">
                         <Link href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                           {video.title}
                         </Link>
@@ -338,3 +344,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    
