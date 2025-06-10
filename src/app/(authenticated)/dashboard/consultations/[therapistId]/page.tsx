@@ -7,10 +7,14 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video, Clock } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video, Clock, ThumbsUp, Send, UserCircle } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addHours } from 'date-fns';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface TherapistProfilePageProps {
   params: Promise<{
@@ -21,6 +25,14 @@ interface TherapistProfilePageProps {
 interface AvailabilitySlot {
   date: string; // YYYY-MM-DD
   slots: string[]; // HH:mm
+}
+
+interface Review {
+    id: string;
+    author: string;
+    rating: number;
+    comment: string;
+    date: string; // ISO Date string
 }
 
 const placeholderTherapistDetails = {
@@ -37,8 +49,15 @@ const placeholderTherapistDetails = {
     { date: '2024-09-10', slots: ['09:00', '10:00', '14:00', '15:00'] },
     { date: '2024-09-11', slots: ['11:00', '15:00', '16:00'] },
     { date: '2024-09-12', slots: ['09:00', '10:00', '11:00', '14:00'] },
-    { date: '2024-09-16', slots: ['10:00', '11:00'] },
-  ] as AvailabilitySlot[]
+    // Add more availability for testing, ensure dates are in the future from current testing date
+    { date: format(new Date(new Date().setDate(new Date().getDate() + 3)), 'yyyy-MM-dd'), slots: ['10:00', '11:00', '14:00'] },
+    { date: format(new Date(new Date().setDate(new Date().getDate() + 5)), 'yyyy-MM-dd'), slots: ['09:30', '13:00', '15:30'] },
+  ] as AvailabilitySlot[],
+  reviews: [
+    { id: 'rev1', author: 'Jane D.', rating: 5, comment: "Dr. Carter is fantastic! She's very understanding and her CBT techniques have really helped my anxiety.", date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'rev2', author: 'John S.', rating: 4, comment: "Helpful sessions, good listener. Sometimes scheduling can be a bit tricky.", date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'rev3', author: 'Anonymous', rating: 5, comment: "Highly recommend for anyone struggling with stress. Very practical advice.", date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+  ] as Review[]
 };
 
 
@@ -46,11 +65,15 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   const params = use(paramsPromise);
   const { therapistId } = params;
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
 
   const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
+  const [showBookingConfirmation, setShowBookingConfirmation] = useState(false);
+  const [newReviewText, setNewReviewText] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(0);
   
   const therapist = placeholderTherapistDetails; // Using placeholder
 
@@ -64,14 +87,14 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       const dayAvailability = therapist.availability.find(day => day.date === formattedDate);
       setAvailableTimes(dayAvailability ? dayAvailability.slots : []);
-      setSelectedTime(undefined); // Reset selected time when date changes
+      setSelectedTime(undefined); 
     } else {
       setAvailableTimes([]);
       setSelectedTime(undefined);
     }
   }, [selectedDate, therapist.availability]);
 
-  const handleBooking = () => {
+  const handleBookingAttempt = () => {
     if (!selectedDate || !selectedTime) {
       toast({
         title: "Selection Incomplete",
@@ -80,15 +103,44 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       });
       return;
     }
-    // Simulate payment and booking
-    toast({
-      title: "Proceeding to Payment (Simulated)",
-      description: `Booking for ${therapist.name} on ${format(selectedDate, 'PPP')} at ${selectedTime}. You would now be redirected to a secure payment gateway.`,
+    setShowBookingConfirmation(true);
+  };
+
+  const handleConfirmBooking = () => {
+    // Simulate booking
+    const bookingId = `booking-${therapist.id}-${Date.now()}`;
+    console.log("Booking Confirmed (Simulated):", {
+        therapistId: therapist.id,
+        therapistName: therapist.name,
+        date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'N/A',
+        time: selectedTime,
+        bookingId: bookingId
     });
-    // In a real app:
-    // 1. Lock the time slot (backend operation)
-    // 2. Redirect to payment gateway
-    // 3. On payment success, confirm booking, send emails (backend operations)
+    // In a real app, save to Firestore here.
+    // Example localStorage save for prototype:
+    const bookings = JSON.parse(localStorage.getItem('wellspringUserBookings') || '[]');
+    bookings.push({ bookingId, therapistId: therapist.id, therapistName: therapist.name, date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'N/A', time: selectedTime, status: 'Confirmed' });
+    localStorage.setItem('wellspringUserBookings', JSON.stringify(bookings));
+
+    setShowBookingConfirmation(false);
+    toast({
+      title: "Session Booked! (Simulated)",
+      description: `Your session with ${therapist.name} on ${selectedDate ? format(selectedDate, 'PPP') : ''} at ${selectedTime} is confirmed.`,
+    });
+    router.push(`/booking-confirmation/${bookingId}`); // Navigate to confirmation page
+  };
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newReviewRating === 0 || !newReviewText.trim()) {
+      toast({ title: "Review Incomplete", description: "Please provide a rating and comment.", variant: "destructive" });
+      return;
+    }
+    // Simulate review submission
+    console.log("Review Submitted (Simulated):", { therapistId, rating: newReviewRating, comment: newReviewText });
+    toast({ title: "Review Submitted (Simulated)", description: "Thank you for your feedback!" });
+    setNewReviewText('');
+    setNewReviewRating(0);
   };
 
   if (isPremiumUser === null) {
@@ -130,7 +182,11 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   }
 
   const today = new Date();
-  const availableDates = therapist.availability.map(a => parseISO(a.date));
+  today.setHours(0,0,0,0); // Set to start of day for comparison
+  
+  const availableDates = therapist.availability
+    .map(a => parseISO(a.date))
+    .filter(d => d >= today); // Only allow booking for today or future dates with availability
 
   return (
     <div className="space-y-8">
@@ -182,12 +238,11 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
-                        disabled={(date) => 
-                            date < today || 
-                            !availableDates.some(availableDate => 
-                                format(availableDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-                            )
-                        }
+                        disabled={(date) => {
+                            if (date < today) return true; // Disable past dates
+                            const dateString = format(date, 'yyyy-MM-dd');
+                            return !therapist.availability.some(a => a.date === dateString && a.slots.length > 0);
+                        }}
                         initialFocus
                         className="w-full flex justify-center"
                     />
@@ -224,33 +279,91 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
                     )}
                 </div>
             </div>
-             <p className="text-xs text-muted-foreground mt-4 text-center">
-                Real-time slot availability and payment integration are simulated for this prototype.
-            </p>
           </div>
 
           <div className="mt-6 pt-6 border-t">
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <MessageSquare className="h-6 w-6 text-primary" />
-                Reviews (Placeholder)
+                Reviews ({therapist.reviews.length})
             </h3>
-             <div className="p-6 border rounded-lg bg-muted/30 text-center">
-                <p className="text-muted-foreground">User reviews will be displayed here.</p>
+             <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
+                {therapist.reviews.map(review => (
+                    <Card key={review.id} className="bg-muted/30">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <UserCircle className="h-5 w-5 text-muted-foreground"/>
+                                    <CardTitle className="text-md">{review.author}</CardTitle>
+                                </div>
+                                <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/50'}`}/>
+                                    ))}
+                                </div>
+                            </div>
+                            <CardDescription className="text-xs">{format(parseISO(review.date), "PPP")}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        </CardContent>
+                    </Card>
+                ))}
              </div>
+             <Card className="bg-background p-4 border-dashed">
+                 <h4 className="text-md font-semibold mb-2">Leave a Review (UI Only)</h4>
+                 <form onSubmit={handleReviewSubmit} className="space-y-3">
+                    <div>
+                        <Label className="mb-1 block">Rating:</Label>
+                        <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <Button key={star} type="button" variant="ghost" size="icon" onClick={() => setNewReviewRating(star)} className={`hover:text-yellow-500 ${newReviewRating >= star ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/50'}`}>
+                                    <Star className="h-5 w-5"/>
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <Label htmlFor="reviewText" className="mb-1 block">Comment:</Label>
+                        <Textarea id="reviewText" value={newReviewText} onChange={(e) => setNewReviewText(e.target.value)} placeholder="Share your experience..." rows={3}/>
+                    </div>
+                    <Button type="submit" size="sm"><Send className="mr-2 h-4 w-4"/>Submit Review</Button>
+                 </form>
+             </Card>
           </div>
         </CardContent>
         <CardFooter className="p-6 border-t bg-muted/20">
             <Button 
                 size="lg" 
                 className="w-full" 
-                onClick={handleBooking}
+                onClick={handleBookingAttempt}
                 disabled={!selectedDate || !selectedTime}
             >
                 <Video className="mr-2 h-5 w-5"/>
-                Proceed to Book Session (Payment Simulated)
+                Proceed to Book Session
             </Button>
         </CardFooter>
       </Card>
+
+      <AlertDialog open={showBookingConfirmation} onOpenChange={setShowBookingConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Your Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to book a session with <strong>{therapist.name}</strong> on <br />
+              <strong>{selectedDate ? format(selectedDate, 'PPP') : 'N/A'}</strong> at <strong>{selectedTime || 'N/A'}</strong>.
+              <br /><br />
+              The session fee is <strong>${therapist.sessionPrice}</strong>. (Payment is simulated for this prototype).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBooking}>Confirm & Book</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
+
+    
