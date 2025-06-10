@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AgeVerificationDialog } from '@/components/app/age-verification-dialog';
-import { Zap, Users, ShieldCheck, Brain, Menu } from 'lucide-react';
+import { Zap, Users, ShieldCheck, Brain, Menu, Video } from 'lucide-react'; // Added Video icon
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 
@@ -114,7 +114,7 @@ export default function LandingPage() {
                 <p className="text-muted-foreground">Personalized support and coping strategies, available 24/7.</p>
               </div>
               <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                 <Image src="https://placehold.co/80x80.png" alt="Video Call Icon" width={80} height={80} className="mb-4 rounded-full" data-ai-hint="video call"/>
+                <Video className="h-12 w-12 text-primary mb-4" /> {/* Replaced Image with Video icon */}
                 <h3 className="text-xl font-semibold text-foreground mb-2">Video Consultations</h3>
                 <p className="text-muted-foreground">Connect with licensed therapists securely (Coming Soon).</p>
               </div>
@@ -145,7 +145,8 @@ export default function LandingPage() {
               />
             </div>
             <div className="md:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-foreground mb-6">
+              <h2 className="text-3xl md:text-4xl font-headline font-semibold text-foreground mb-6 flex items-center justify-center md:justify-start gap-2"> {/* Added flex, items-center, gap-2 and responsive justify */}
+                <Brain className="h-8 w-8 text-primary" /> {/* Added Brain icon */}
                 About MINDSTRIDE
               </h2>
               <p className="text-lg text-muted-foreground mb-4">
