@@ -85,28 +85,12 @@ export default function LandingPage() {
           {/* Overlay for readability */}
           <div className="absolute inset-0 bg-black/10"></div>
 
-          {/* Content Layer - Subtext and Buttons at the bottom */}
+          {/* Content Layer - Subtext at the bottom */}
           <div className="relative h-full flex flex-col justify-end items-center px-4 md:px-6 pb-12 sm:pb-16 text-center">
-            <p className="text-md sm:text-lg text-white mb-6 sm:mb-8 max-w-3xl mx-auto [text-shadow:_0_1px_2px_rgb(0_0_0_/_0.4)]">
+            <p className="text-md sm:text-lg text-white font-semibold mb-6 sm:mb-8 max-w-3xl mx-auto [text-shadow:_0_1px_2px_rgb(0_0_0_/_0.4)]">
               MINDSTRIDE provides AI-powered assistance, community support, and personalized wellness tools in a secure, user-friendly environment.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Button
-                size="lg"
-                onClick={() => setIsAgeDialogOpen(true)}
-                className="shadow-lg hover:shadow-xl transition-shadow duration-300"
-              >
-                Get Started
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                asChild
-                className="shadow-lg hover:shadow-xl transition-shadow duration-300"
-              >
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-            </div>
+            {/* Buttons removed from here */}
           </div>
         </section>
 
