@@ -64,11 +64,27 @@ const nextConfig: NextConfig = {
         hostname: 'i.ytimg.com',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pinimg.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hips.hearstapps.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.freepik.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
 
 export default nextConfig;
-
-    

@@ -19,9 +19,9 @@ interface Therapist {
 }
 
 const placeholderTherapists: Therapist[] = [
-  { id: '1', name: 'Dr. Emily Carter', specialization: 'Cognitive Behavioral Therapy', imageUrl: 'https://placehold.co/300x300.png', description: 'Experienced in treating anxiety and depression with CBT techniques.', rating: 4.8 },
-  { id: '2', name: 'Dr. Ben Miller', specialization: 'Mindfulness & Stress Reduction', imageUrl: 'https://placehold.co/300x300.png', description: 'Helping clients find calm and manage stress through mindfulness practices.', rating: 4.9 },
-  { id: '3', name: 'Dr. Olivia Davis', specialization: 'Relationship Counseling', imageUrl: 'https://placehold.co/300x300.png', description: 'Supports individuals and couples in building healthier relationships.', rating: 4.7 },
+  { id: '1', name: 'Dr. Emily Carter', specialization: 'Cognitive Behavioral Therapy', imageUrl: 'https://i.pinimg.com/736x/c9/b5/b6/c9b5b62799692878b33d77fa2eb1fc38.jpg', description: 'Experienced in treating anxiety and depression with CBT techniques.', rating: 4.8 },
+  { id: '2', name: 'Dr. Ben Miller', specialization: 'Mindfulness & Stress Reduction', imageUrl: 'https://hips.hearstapps.com/hmg-prod/images/portrait-of-a-happy-young-doctor-in-his-clinic-royalty-free-image-1661432441.jpg', description: 'Helping clients find calm and manage stress through mindfulness practices.', rating: 4.9 },
+  { id: '3', name: 'Dr. Olivia Davis', specialization: 'Relationship Counseling', imageUrl: 'https://img.freepik.com/free-photo/beautiful-young-female-doctor-looking-camera-office_1301-7807.jpg?semt=ais_items_boosted&w=740', description: 'Supports individuals and couples in building healthier relationships.', rating: 4.7 },
 ];
 
 function TherapistCard({ therapist }: { therapist: Therapist }) {

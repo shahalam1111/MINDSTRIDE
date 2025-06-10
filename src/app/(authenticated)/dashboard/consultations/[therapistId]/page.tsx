@@ -39,7 +39,7 @@ const placeholderTherapistDetails = {
   id: '1',
   name: 'Dr. Emily Carter',
   specialization: 'Cognitive Behavioral Therapy',
-  imageUrl: 'https://placehold.co/400x400.png',
+  imageUrl: 'https://i.pinimg.com/736x/c9/b5/b6/c9b5b62799692878b33d77fa2eb1fc38.jpg',
   bio: "Dr. Emily Carter is a licensed clinical psychologist with over 10 years of experience specializing in Cognitive Behavioral Therapy (CBT). She is passionate about helping individuals overcome challenges such as anxiety, depression, and stress. Dr. Carter believes in a collaborative approach, working with clients to develop practical skills and strategies for lasting mental wellness. Her sessions are tailored to individual needs, fostering a supportive and non-judgmental environment.",
   languages: ['English', 'Spanish'],
   rating: 4.8,
@@ -75,7 +75,12 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   const [newReviewText, setNewReviewText] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(0);
   
-  const therapist = placeholderTherapistDetails; // Using placeholder
+  // In a real app, you would fetch therapist details based on therapistId
+  // For this prototype, we'll use placeholderTherapistDetails if therapistId matches,
+  // otherwise you might show a "not found" state or fetch other mock data.
+  // This example primarily focuses on therapistId '1' matching placeholderTherapistDetails.
+  const therapist = therapistId === placeholderTherapistDetails.id ? placeholderTherapistDetails : null;
+
 
   useEffect(() => {
     const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
@@ -83,7 +88,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   }, []);
 
   useEffect(() => {
-    if (selectedDate && therapist.availability) {
+    if (selectedDate && therapist && therapist.availability) {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       const dayAvailability = therapist.availability.find(day => day.date === formattedDate);
       setAvailableTimes(dayAvailability ? dayAvailability.slots : []);
@@ -92,7 +97,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       setAvailableTimes([]);
       setSelectedTime(undefined);
     }
-  }, [selectedDate, therapist.availability]);
+  }, [selectedDate, therapist]);
 
   const handleBookingAttempt = () => {
     if (!selectedDate || !selectedTime) {
@@ -107,6 +112,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   };
 
   const handleConfirmBooking = () => {
+    if (!therapist || !selectedDate || !selectedTime) return; // Guard against null therapist
     // Simulate booking
     const bookingId = `booking-${therapist.id}-${Date.now()}`;
     console.log("Booking Confirmed (Simulated):", {
@@ -176,10 +182,21 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       </div>
     );
   }
-
+  
   if (!therapist) {
-    return <div className="text-center py-10">Therapist not found.</div>;
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center p-6">
+            <Card className="max-w-md shadow-xl">
+                <CardHeader><CardTitle>Therapist Not Found</CardTitle></CardHeader>
+                <CardContent><p>The therapist profile could not be loaded.</p></CardContent>
+                <CardFooter>
+                    <Button variant="outline" asChild><Link href="/dashboard/consultations"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory</Link></Button>
+                </CardFooter>
+            </Card>
+        </div>
+    );
   }
+
 
   const today = new Date();
   today.setHours(0,0,0,0); // Set to start of day for comparison
@@ -365,5 +382,3 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
     </div>
   );
 }
-
-    
