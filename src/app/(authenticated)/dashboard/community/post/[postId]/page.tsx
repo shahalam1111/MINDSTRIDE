@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label'; // Changed from FormLabel
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, SmilePlus, Heart, Flag, Send } from 'lucide-react';
@@ -218,7 +219,7 @@ export default function PostViewPage() {
           )}
           <Separator className="my-6"/>
           <form onSubmit={handleCommentSubmit} className="space-y-3">
-            <FormLabel htmlFor="new-comment" className="text-md font-semibold">Add Your Comment</FormLabel>
+            <Label htmlFor="new-comment" className="text-md font-semibold">Add Your Comment</Label>
             <Textarea
               id="new-comment"
               value={newComment}
@@ -237,3 +238,4 @@ export default function PostViewPage() {
     </div>
   );
 }
+
