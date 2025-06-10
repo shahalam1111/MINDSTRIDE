@@ -91,6 +91,12 @@ export default function LandingPage() {
           </Link>
           <nav className="hidden md:flex gap-2">
              <Button variant="ghost" asChild>
+               <Link href="#latest-blogs">Latest Blogs</Link>
+             </Button>
+             <Button variant="ghost" asChild>
+               <Link href="#featured-videos">Featured Content</Link>
+             </Button>
+             <Button variant="ghost" asChild>
                <Link href="#features">Features</Link>
              </Button>
              <Button variant="ghost" asChild>
@@ -118,6 +124,8 @@ export default function LandingPage() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background">
               <nav className="flex flex-col gap-4 mt-8">
+                <Link href="#latest-blogs" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Latest Blogs</Link>
+                <Link href="#featured-videos" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Featured Content</Link>
                 <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">Features</Link>
                 <Link href="#about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">About</Link>
                 <Link href="/faq" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium hover:text-primary">FAQ</Link>
@@ -322,5 +330,7 @@ export default function LandingPage() {
   );
 }
 
+
+    
 
     
