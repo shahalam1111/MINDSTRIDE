@@ -170,8 +170,12 @@ export default function DashboardPage() {
           } else {
             console.log("MINDSTRIDE: No intake data in Firestore, trying localStorage.");
           }
-        } catch (error) {
-          console.error("MINDSTRIDE: Error loading intake data from Firestore:", error);
+        } catch (error: any) {
+          if (error.code === 'unavailable' || error.message?.toLowerCase().includes('offline')) {
+            console.warn("MINDSTRIDE: Firestore is unavailable (client offline). Will rely on localStorage.", error.message);
+          } else {
+            console.error("MINDSTRIDE: Error loading intake data from Firestore:", error);
+          }
         }
       } else {
          console.warn("MINDSTRIDE: Firestore not configured. Skipping Firestore read for intake data.");
