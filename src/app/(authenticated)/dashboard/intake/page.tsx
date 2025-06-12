@@ -16,8 +16,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase'; // Import Firestore instance
+import { db } from '@/lib/firebase'; 
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
+import { analyzeInitialIntake, type InitialIntakeInput, type InitialIntakeOutput } from '@/ai/flows/initial-intake-analyzer';
+import { Loader2 } from 'lucide-react';
 
 const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'] as const;
 const TIMEZONE_OPTIONS = [
@@ -100,11 +102,13 @@ const intakeFormSchema = z.object({
 
 type IntakeFormValues = z.infer<typeof intakeFormSchema>;
 
-const USER_ID_PLACEHOLDER = "mockUserId"; // Replace with actual user ID from Firebase Auth later
+const USER_ID_PLACEHOLDER = "mockUserId"; 
+const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults';
 
 export default function IntakeFormPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [isSubmittingIntake, setIsSubmittingIntake] = useState(false);
 
   const form = useForm<IntakeFormValues>({
     resolver: zodResolver(intakeFormSchema),
@@ -113,7 +117,7 @@ export default function IntakeFormPage() {
       age: 18,
       gender: 'Prefer not to say',
       city: '',
-      timezone: TIMEZONE_OPTIONS[3], // Default to Pacific Time
+      timezone: TIMEZONE_OPTIONS[3], 
       diagnosisHistory: 'Prefer not to say',
       diagnoses: [],
       otherDiagnosis: '',
@@ -137,6 +141,7 @@ export default function IntakeFormPage() {
   const selectedTodayMood = form.watch('todayMood');
 
   const onSubmit = async (data: IntakeFormValues) => {
+    setIsSubmittingIntake(true);
     try {
       let finalDiagnoses: string[] = data.diagnoses || [];
       if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other')) {
@@ -146,39 +151,55 @@ export default function IntakeFormPage() {
         }
       }
       
-      const processedData = {
+      const processedDataForStorage = {
         ...data,
         location: `${data.city}, ${data.timezone}`,
         diagnoses: finalDiagnoses,
         age: Number(data.age),
         sleepPatterns: Number(data.sleepPatterns),
         currentStressLevel: Number(data.currentStressLevel),
-        updatedAt: serverTimestamp(), // For Firestore
+        updatedAt: serverTimestamp(), 
       };
       
-      const { city, timezone, otherDiagnosis, ...payloadToStore } = processedData;
+      const { city, timezone, otherDiagnosis, ...payloadToStore } = processedDataForStorage;
+      const payloadForAnalysis: InitialIntakeInput = {
+        ...data, // Use original form data for analysis input type
+        location: `${data.city}, ${data.timezone}`, // ensure location is combined
+        diagnoses: finalDiagnoses,
+        age: Number(data.age),
+        sleepPatterns: Number(data.sleepPatterns),
+        currentStressLevel: Number(data.currentStressLevel),
+      };
 
-      // Save to localStorage (can be kept as a fallback or removed later)
+
       localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStore));
-      
-      // Save to Firestore
-      // IMPORTANT: USER_ID_PLACEHOLDER must be replaced with actual Firebase Auth user.uid in a real app
       const userIntakeDocRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
-      await setDoc(userIntakeDocRef, payloadToStore, { merge: true }); // Use merge:true to update if exists
+      await setDoc(userIntakeDocRef, payloadToStore, { merge: true }); 
 
-      console.log("Intake Form Data saved to localStorage and Firestore:", payloadToStore);
       toast({
-        title: "Intake Form Submitted",
-        description: "Your information has been saved. We'll use this to personalize your experience.",
+        title: "Intake Information Saved",
+        description: "Now analyzing your responses to personalize your experience...",
+      });
+
+      const analysisOutput: InitialIntakeOutput = await analyzeInitialIntake(payloadForAnalysis);
+      localStorage.setItem(INTAKE_ANALYSIS_LS_KEY, JSON.stringify(analysisOutput));
+      
+      console.log("Intake Form Data saved and analyzed:", payloadToStore, analysisOutput);
+      toast({
+        title: "Analysis Complete!",
+        description: "Redirecting to your dashboard.",
       });
       router.push('/dashboard');
+
     } catch (error) {
-      console.error("Failed to save intake form:", error);
+      console.error("Failed to save or analyze intake form:", error);
       toast({
         title: "Error",
-        description: "Failed to save your intake form. Please try again.",
+        description: "Failed to process your intake form. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingIntake(false);
     }
   };
 
@@ -198,7 +219,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="fullName" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name (Optional)</FormLabel>
-                  <FormControl><Input placeholder="Your full name" {...field} /></FormControl>
+                  <FormControl><Input placeholder="Your full name" {...field} disabled={isSubmittingIntake} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -206,7 +227,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="age" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Age</FormLabel>
-                  <FormControl><Input type="number" placeholder="Your age" {...field} /></FormControl>
+                  <FormControl><Input type="number" placeholder="Your age" {...field} disabled={isSubmittingIntake} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -214,7 +235,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="gender" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Gender</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select your gender" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
@@ -228,14 +249,14 @@ export default function IntakeFormPage() {
                 <FormField control={form.control} name="city" render={({ field }) => (
                   <FormItem>
                     <FormLabel>City</FormLabel>
-                    <FormControl><Input placeholder="e.g., San Francisco" {...field} /></FormControl>
+                    <FormControl><Input placeholder="e.g., San Francisco" {...field} disabled={isSubmittingIntake} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>
                 <FormField control={form.control} name="timezone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Timezone</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select your timezone" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {TIMEZONE_OPTIONS.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
@@ -250,7 +271,7 @@ export default function IntakeFormPage() {
                 <FormItem className="space-y-3">
                   <FormLabel>Have you been diagnosed with any mental health conditions?</FormLabel>
                   <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1" disabled={isSubmittingIntake}>
                       {DIAGNOSIS_HISTORY_OPTIONS.map(opt => (
                         <FormItem key={opt} className="flex items-center space-x-3 space-y-0">
                           <FormControl><RadioGroupItem value={opt} /></FormControl>
@@ -285,6 +306,7 @@ export default function IntakeFormPage() {
                                         ? field.onChange([...(field.value || []), item.id])
                                         : field.onChange((field.value || []).filter((value) => value !== item.id));
                                     }}
+                                    disabled={isSubmittingIntake}
                                   />
                                 </FormControl>
                                 <FormLabel className="font-normal cursor-pointer">{item.label}</FormLabel>
@@ -299,7 +321,7 @@ export default function IntakeFormPage() {
                       <FormField control={form.control} name="otherDiagnosis" render={({ field }) => (
                         <FormItem className="mt-4">
                           <FormLabel>If "Other", please specify:</FormLabel>
-                          <FormControl><Input placeholder="Specify other diagnosis" {...field} /></FormControl>
+                          <FormControl><Input placeholder="Specify other diagnosis" {...field} disabled={isSubmittingIntake} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}/>
@@ -313,7 +335,7 @@ export default function IntakeFormPage() {
                 <FormItem className="space-y-3">
                   <FormLabel>Are you currently seeing a therapist or mental health professional?</FormLabel>
                   <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1" disabled={isSubmittingIntake}>
                       {CURRENT_TREATMENT_OPTIONS.map(opt => (
                         <FormItem key={opt} className="flex items-center space-x-3 space-y-0">
                           <FormControl><RadioGroupItem value={opt} /></FormControl>
@@ -336,6 +358,7 @@ export default function IntakeFormPage() {
                           min={3} max={12} step={1}
                           onValueChange={(value) => field.onChange(value[0])}
                           className="w-[90%]"
+                          disabled={isSubmittingIntake}
                         />
                         <span className="w-[10%] text-center text-lg font-semibold">{field.value}</span>
                     </div>
@@ -347,7 +370,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="exerciseFrequency" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Weekly exercise sessions (approx.)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {EXERCISE_FREQUENCY_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -360,7 +383,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="substanceUse" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Alcohol and smoking habits</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {SUBSTANCE_USE_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -380,6 +403,7 @@ export default function IntakeFormPage() {
                           min={1} max={10} step={1}
                           onValueChange={(value) => field.onChange(value[0])}
                           className="w-[90%]"
+                          disabled={isSubmittingIntake}
                         />
                         <span className="w-[10%] text-center text-lg font-semibold">{field.value}</span>
                     </div>
@@ -400,6 +424,7 @@ export default function IntakeFormPage() {
                           variant={selectedTodayMood === mood.emoji ? 'default' : 'outline'}
                           onClick={() => field.onChange(mood.emoji)}
                           className="flex items-center gap-2 px-3 py-2 rounded-lg text-base"
+                          disabled={isSubmittingIntake}
                         >
                           <span className="text-2xl">{mood.emoji}</span>
                           {mood.label}
@@ -432,6 +457,7 @@ export default function IntakeFormPage() {
                                     ? field.onChange([...(field.value || []), item.id])
                                     : field.onChange((field.value || []).filter((value) => value !== item.id));
                                 }}
+                                disabled={isSubmittingIntake}
                               />
                             </FormControl>
                             <FormLabel className="font-normal cursor-pointer">{item.label}</FormLabel>
@@ -466,6 +492,7 @@ export default function IntakeFormPage() {
                                     ? field.onChange([...(field.value || []), item.id])
                                     : field.onChange((field.value || []).filter((value) => value !== item.id));
                                 }}
+                                disabled={isSubmittingIntake}
                               />
                             </FormControl>
                             <FormLabel className="font-normal cursor-pointer">{item.label}</FormLabel>
@@ -500,6 +527,7 @@ export default function IntakeFormPage() {
                                     ? field.onChange([...(field.value || []), item.id])
                                     : field.onChange((field.value || []).filter((value) => value !== item.id));
                                 }}
+                                disabled={isSubmittingIntake}
                               />
                             </FormControl>
                             <FormLabel className="font-normal cursor-pointer">{item.label}</FormLabel>
@@ -516,7 +544,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="checkInFrequency" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Preferred frequency for check-ins</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {CHECKIN_FREQUENCY_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -529,7 +557,7 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="preferredTime" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Preferred time for check-ins</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmittingIntake}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {PREFERRED_TIME_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -542,13 +570,18 @@ export default function IntakeFormPage() {
               <FormField control={form.control} name="additionalInformation" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Any additional information you want to share (Optional)</FormLabel>
-                  <FormControl><Textarea placeholder="Share anything else that might be helpful..." {...field} rows={5} /></FormControl>
+                  <FormControl><Textarea placeholder="Share anything else that might be helpful..." {...field} rows={5} disabled={isSubmittingIntake} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
 
-              <Button type="submit" size="lg" className="w-full text-lg py-3 rounded-lg shadow-md hover:shadow-lg transition-shadow" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Saving Information..." : "Save Intake Information"}
+              <Button type="submit" size="lg" className="w-full text-lg py-3 rounded-lg shadow-md hover:shadow-lg transition-shadow" disabled={isSubmittingIntake}>
+                {isSubmittingIntake ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Saving & Analyzing...
+                  </>
+                ) : "Save Intake Information"}
               </Button>
             </form>
           </Form>
@@ -558,3 +591,5 @@ export default function IntakeFormPage() {
   );
 }
 
+
+    

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { aiChatbotAssistant, type AIChatbotAssistantInput } from '@/ai/flows/ai-chatbot-assistant';
+import type { InitialIntakeOutput } from '@/ai/flows/initial-intake-analyzer'; // Import type
 import { Send, Loader2, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
@@ -33,38 +34,28 @@ const WELCOME_MESSAGE_ID = "ai-welcome-message";
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const AI_CHAT_HISTORY_KEY = 'wellspringUserAiChatHistory';
 const MAX_AI_HISTORY_LENGTH = 20;
+const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults';
 
-// Helper component to render a line of text with basic Markdown support
+
 const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
-  const trimmedLine = line.trimStart(); // Keep leading spaces for potential nested lists if AI generates them
+  const trimmedLine = line.trimStart(); 
 
-  // Process inline **bold** and *italic*/_italic_
   const processInlineMarkdown = (text: string): ReactNode[] => {
     const parts: ReactNode[] = [];
     let remainingText = text;
     let key = 0;
-
-    // Split by **bold** or *italic* or _italic_
-    // Regex: (\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_)
-    // Group 1: Full match
-    // Group 2: Content of **bold**
-    // Group 3: Content of *italic*
-    // Group 4: Content of _italic_
     const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_)/g;
     let lastIndex = 0;
     let match;
 
     while ((match = regex.exec(remainingText)) !== null) {
-      // Add text before the match
       if (match.index > lastIndex) {
         parts.push(remainingText.substring(lastIndex, match.index));
       }
-
       const fullMatch = match[0];
       const boldContent = match[2];
       const italicStarContent = match[3];
       const italicUnderscoreContent = match[4];
-
       if (boldContent) {
         parts.push(<strong className="font-semibold text-foreground" key={`md-${key++}`}>{boldContent}</strong>);
       } else if (italicStarContent) {
@@ -74,25 +65,19 @@ const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
       }
       lastIndex = match.index + fullMatch.length;
     }
-
-    // Add any remaining text after the last match
     if (lastIndex < remainingText.length) {
       parts.push(remainingText.substring(lastIndex));
     }
-    
-    if (parts.length === 0 && remainingText.length > 0) { // Handle lines with no markdown
+    if (parts.length === 0 && remainingText.length > 0) {
         return [remainingText];
     }
-
     return parts;
   };
 
-  // Handle headings like "**Title:**" or "**1. Title:**"
-  // Regex: ^\s*\*\*(?:(\d+\.\s+))?(.+?):\*\*\s*$
   const headingMatch = trimmedLine.match(/^\s*\*\*(?:(\d+\.\s+))?(.+?):\*\*\s*$/);
   if (headingMatch) {
-    const number = headingMatch[1] || ''; // e.g., "1. "
-    const text = headingMatch[2]; // Just the text part of the heading
+    const number = headingMatch[1] || ''; 
+    const text = headingMatch[2]; 
     return (
       <p className="text-lg font-semibold mt-3 mb-1 text-foreground">
         {number}{text}:
@@ -100,13 +85,11 @@ const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
     );
   }
 
-  // Handle bullet points "* item" or "- item"
-  // Regex: ^\s*([*-])\s+(.*)
   const bulletMatch = trimmedLine.match(/^\s*([*-])\s+(.*)/);
   if (bulletMatch) {
     const content = bulletMatch[2];
-    const indentLevel = line.match(/^\s*/)?.[0].length || 0; // Basic indent detection
-    const marginLeft = Math.min(Math.floor(indentLevel / 2) * 0.5, 2); // Max 2rem indent e.g. ml-8
+    const indentLevel = line.match(/^\s*/)?.[0].length || 0; 
+    const marginLeft = Math.min(Math.floor(indentLevel / 2) * 0.5, 2); 
     
     return (
       <div className={`text-muted-foreground flex items-start`} style={{ marginLeft: `${marginLeft}rem` }}>
@@ -116,17 +99,15 @@ const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
     );
   }
   
-  // Handle regular paragraph lines with inline bold/italic
   if (trimmedLine) {
     return <p className="text-muted-foreground">{processInlineMarkdown(trimmedLine)}</p>;
   }
 
-  // Return an empty paragraph or similar for intentionally blank lines to maintain spacing
   if (line === '') {
-    return <p className="h-4"></p>; // Represents a line break, adjust height as needed
+    return <p className="h-4"></p>; 
   }
 
-  return null; // For lines that are only whitespace or otherwise not rendered
+  return null; 
 };
 
 
@@ -139,17 +120,54 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open && messages.length === 0) {
-      setMessages([
-        {
-          id: WELCOME_MESSAGE_ID,
-          sender: 'ai',
-          text: "Hello! I'm your MINDSTRIDE AI Assistant. How can I help you today?",
-          timestamp: new Date(),
+    if (open) {
+      const analysisResultsString = localStorage.getItem(INTAKE_ANALYSIS_LS_KEY);
+      let initialAiText = "Hello! I'm your MINDSTRIDE AI Assistant. How can I help you today?";
+      let newWelcomeMessageId = WELCOME_MESSAGE_ID;
+
+      if (analysisResultsString) {
+        try {
+          const results: InitialIntakeOutput = JSON.parse(analysisResultsString);
+          let analysisMessage = "I've reviewed your recent intake information and have some initial thoughts and recommendations based on what you shared:\n\n";
+          
+          if (results.keyConcerns && results.keyConcerns.length > 0) {
+            analysisMessage += "**Key Areas We Could Focus On:**\n";
+            results.keyConcerns.forEach(concern => analysisMessage += `* ${concern}\n`);
+            analysisMessage += "\n";
+          }
+          if (results.suggestedSupportNeeds && results.suggestedSupportNeeds.length > 0) {
+            analysisMessage += "**Helpful Support Areas:**\n";
+            results.suggestedSupportNeeds.forEach(need => analysisMessage += `* ${need}\n`);
+            analysisMessage += "\n";
+          }
+          if (results.personalizedRecommendations && results.personalizedRecommendations.length > 0) {
+            analysisMessage += "**Personalized Recommendations to Get Started:**\n";
+            results.personalizedRecommendations.forEach(rec => analysisMessage += `* ${rec}\n`);
+            analysisMessage += "\n";
+          }
+          analysisMessage += "How do these initial thoughts resonate with you, or what's on your mind today?";
+          initialAiText = analysisMessage;
+          newWelcomeMessageId = `ai-welcome-analyzed-${Date.now()}`; // Unique ID for analysis message
+          localStorage.removeItem(INTAKE_ANALYSIS_LS_KEY); 
+        } catch (e) {
+          console.error("Error parsing intake analysis results for chat dialog", e);
         }
-      ]);
+      }
+
+      // Update messages if it's the first time opening, or if the initial message needs to change
+      if (messages.length === 0 || (messages.length > 0 && messages[0].id !== newWelcomeMessageId && initialAiText !== messages[0].text)) {
+           setMessages([
+              {
+                id: newWelcomeMessageId,
+                sender: 'ai',
+                text: initialAiText,
+                timestamp: new Date(),
+              }
+            ]);
+      }
     }
-  }, [open, messages.length]);
+  }, [open]); // Re-run when dialog opens
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -171,11 +189,11 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
     setIsLoading(true);
 
     try {
-      let intakeData: Partial<AIChatbotAssistantInput> = {};
+      let intakeDataForAIChat: Partial<AIChatbotAssistantInput> = {};
       const storedIntakeData = localStorage.getItem('wellspringUserIntakeData');
       if (storedIntakeData) {
         const parsedIntakeData = JSON.parse(storedIntakeData);
-        intakeData = {
+        intakeDataForAIChat = {
           name: parsedIntakeData.fullName,
           age: parsedIntakeData.age,
           gender: parsedIntakeData.gender,
@@ -196,7 +214,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
       
       const aiInput: AIChatbotAssistantInput = {
         message: userMessage.text,
-        ...intakeData,
+        ...intakeDataForAIChat,
       };
 
       const aiResponse = await aiChatbotAssistant(aiInput);
@@ -214,18 +232,14 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
         timestamp: aiMessageTimestamp.toISOString(),
       };
 
-      // Save last AI message for dashboard recent activity feed
       localStorage.setItem(LAST_AI_CHAT_ACTIVITY_KEY, JSON.stringify(aiMessageActivity));
-
-      // Save to AI chat history for the "All Activity" page
       const existingHistoryString = localStorage.getItem(AI_CHAT_HISTORY_KEY);
       let existingHistory: AiChatHistoryEntry[] = existingHistoryString ? JSON.parse(existingHistoryString) : [];
-      existingHistory.unshift(aiMessageActivity); // Add to the beginning
+      existingHistory.unshift(aiMessageActivity); 
       if (existingHistory.length > MAX_AI_HISTORY_LENGTH) {
         existingHistory = existingHistory.slice(0, MAX_AI_HISTORY_LENGTH);
       }
       localStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(existingHistory));
-
 
     } catch (error) {
       console.error("Failed to get AI response:", error);
@@ -263,7 +277,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           </DialogHeader>
           
           <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-            <div className="space-y-1"> {/* Reduced space-y for tighter line grouping */}
+            <div className="space-y-1">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -276,7 +290,6 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
                         : 'bg-muted text-muted-foreground rounded-bl-none'
                     }`}
                   >
-                    {/* Render each line using MarkdownLineRenderer */}
                     {msg.text.split('\n').map((line, index) => (
                       <MarkdownLineRenderer key={`${msg.id}-line-${index}`} line={line} />
                     ))}
@@ -325,5 +338,6 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
     </>
   );
 }
+
 
     
