@@ -137,7 +137,6 @@ export default function IntakeFormPage() {
   const selectedTodayMood = form.watch('todayMood');
 
   const onSubmit = async (data: IntakeFormValues) => {
-    form.formState.isSubmitting = true;
     try {
       let finalDiagnoses: string[] = data.diagnoses || [];
       if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other')) {
@@ -180,8 +179,6 @@ export default function IntakeFormPage() {
         description: "Failed to save your intake form. Please try again.",
         variant: "destructive",
       });
-    } finally {
-       form.formState.isSubmitting = false;
     }
   };
 
@@ -560,3 +557,4 @@ export default function IntakeFormPage() {
     </div>
   );
 }
+
