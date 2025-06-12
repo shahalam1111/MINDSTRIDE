@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState } from 'react'; // Removed 'use' as it's not needed for params
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,16 +10,16 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, CalendarDays, MessageSquare, ShieldCheck, Star, Video, Clock, ThumbsUp, Send, UserCircle } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO, addHours } from 'date-fns';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { format, parseISO } from 'date-fns'; // Removed addHours as it wasn't used
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"; // Removed AlertDialogTrigger as it's not used directly here
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 
 interface TherapistProfilePageProps {
-  params: Promise<{
+  params: { // Corrected: params is an object, not a promise
     therapistId: string;
-  }>;
+  };
 }
 
 interface AvailabilitySlot {
@@ -49,7 +49,6 @@ const placeholderTherapistDetails = {
     { date: '2024-09-10', slots: ['09:00', '10:00', '14:00', '15:00'] },
     { date: '2024-09-11', slots: ['11:00', '15:00', '16:00'] },
     { date: '2024-09-12', slots: ['09:00', '10:00', '11:00', '14:00'] },
-    // Add more availability for testing, ensure dates are in the future from current testing date
     { date: format(new Date(new Date().setDate(new Date().getDate() + 3)), 'yyyy-MM-dd'), slots: ['10:00', '11:00', '14:00'] },
     { date: format(new Date(new Date().setDate(new Date().getDate() + 5)), 'yyyy-MM-dd'), slots: ['09:30', '13:00', '15:30'] },
   ] as AvailabilitySlot[],
@@ -61,11 +60,10 @@ const placeholderTherapistDetails = {
 };
 
 
-export default function TherapistProfilePage({ params: paramsPromise }: TherapistProfilePageProps) {
-  const params = use(paramsPromise);
-  const { therapistId } = params;
+export default function TherapistProfilePage({ params }: TherapistProfilePageProps) { // Correctly destructure params
+  const { therapistId } = params; // Access therapistId directly from params
   const { toast } = useToast();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -75,10 +73,6 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   const [newReviewText, setNewReviewText] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(0);
   
-  // In a real app, you would fetch therapist details based on therapistId
-  // For this prototype, we'll use placeholderTherapistDetails if therapistId matches,
-  // otherwise you might show a "not found" state or fetch other mock data.
-  // This example primarily focuses on therapistId '1' matching placeholderTherapistDetails.
   const therapist = therapistId === placeholderTherapistDetails.id ? placeholderTherapistDetails : null;
 
 
@@ -112,8 +106,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
   };
 
   const handleConfirmBooking = () => {
-    if (!therapist || !selectedDate || !selectedTime) return; // Guard against null therapist
-    // Simulate booking
+    if (!therapist || !selectedDate || !selectedTime) return; 
     const bookingId = `booking-${therapist.id}-${Date.now()}`;
     console.log("Booking Confirmed (Simulated):", {
         therapistId: therapist.id,
@@ -122,8 +115,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
         time: selectedTime,
         bookingId: bookingId
     });
-    // In a real app, save to Firestore here.
-    // Example localStorage save for prototype:
+    
     const bookings = JSON.parse(localStorage.getItem('wellspringUserBookings') || '[]');
     bookings.push({ bookingId, therapistId: therapist.id, therapistName: therapist.name, date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'N/A', time: selectedTime, status: 'Confirmed' });
     localStorage.setItem('wellspringUserBookings', JSON.stringify(bookings));
@@ -133,7 +125,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       title: "Session Booked! (Simulated)",
       description: `Your session with ${therapist.name} on ${selectedDate ? format(selectedDate, 'PPP') : ''} at ${selectedTime} is confirmed.`,
     });
-    router.push(`/booking-confirmation/${bookingId}`); // Navigate to confirmation page
+    router.push(`/booking-confirmation/${bookingId}`);
   };
 
   const handleReviewSubmit = (e: React.FormEvent) => {
@@ -142,7 +134,6 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
       toast({ title: "Review Incomplete", description: "Please provide a rating and comment.", variant: "destructive" });
       return;
     }
-    // Simulate review submission
     console.log("Review Submitted (Simulated):", { therapistId, rating: newReviewRating, comment: newReviewText });
     toast({ title: "Review Submitted (Simulated)", description: "Thank you for your feedback!" });
     setNewReviewText('');
@@ -197,13 +188,12 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
     );
   }
 
-
   const today = new Date();
-  today.setHours(0,0,0,0); // Set to start of day for comparison
+  today.setHours(0,0,0,0); 
   
   const availableDates = therapist.availability
     .map(a => parseISO(a.date))
-    .filter(d => d >= today); // Only allow booking for today or future dates with availability
+    .filter(d => d >= today); 
 
   return (
     <div className="space-y-8">
@@ -256,7 +246,7 @@ export default function TherapistProfilePage({ params: paramsPromise }: Therapis
                         selected={selectedDate}
                         onSelect={setSelectedDate}
                         disabled={(date) => {
-                            if (date < today) return true; // Disable past dates
+                            if (date < today) return true; 
                             const dateString = format(date, 'yyyy-MM-dd');
                             return !therapist.availability.some(a => a.date === dateString && a.slots.length > 0);
                         }}
