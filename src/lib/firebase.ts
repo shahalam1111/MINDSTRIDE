@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, type Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
+import { getFirestore, type Firestore } from "firebase/firestore";
 // import { getAuth } from "firebase/auth"; // For future Firebase Auth integration
 // import { getStorage } from "firebase/storage"; // For future Firebase Storage integration
 
@@ -14,35 +14,32 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-let app: FirebaseApp;
-let dbInstance: Firestore;
+let app: FirebaseApp | null = null;
+let dbInstance: Firestore | null = null;
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-  dbInstance = getFirestore(app);
-  enableIndexedDbPersistence(dbInstance, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
-    .then(() => {
-      console.log("Firestore offline persistence enabled successfully.");
-    })
-    .catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.warn(
-          "MINDSTRIDE: Firestore offline persistence failed. This can happen if multiple tabs are open or due to other browser limitations. Data might not be available offline in this tab."
-        );
-      } else if (err.code === 'unimplemented') {
-        console.warn(
-          "MINDSTRIDE: Firestore offline persistence is not supported in this browser environment. Data will not be available offline."
-        );
-      } else {
-        console.error("MINDSTRIDE: An unexpected error occurred while enabling Firestore offline persistence: ", err);
-      }
-    });
+// Only initialize Firebase if a projectId is actually set.
+if (firebaseConfig.projectId && typeof firebaseConfig.projectId === 'string' && firebaseConfig.projectId.trim() !== '') {
+  if (!getApps().length) {
+    try {
+      app = initializeApp(firebaseConfig);
+      dbInstance = getFirestore(app);
+      console.log("MINDSTRIDE: Firebase initialized with Firestore.");
+      // Note: Firestore offline persistence (enableIndexedDbPersistence) has been removed for now.
+      // It can be re-enabled if/when Firestore is fully configured and desired.
+    } catch (e) {
+      console.error("MINDSTRIDE: Firebase initialization failed:", e);
+      app = null;
+      dbInstance = null;
+    }
+  } else {
+    app = getApps()[0];
+    dbInstance = getFirestore(app);
+    // console.log("MINDSTRIDE: Firebase app already initialized. Using existing Firestore instance.");
+  }
 } else {
-  app = getApps()[0];
-  // If app is already initialized, get the Firestore instance.
-  // Persistence should have been enabled by the first initializer.
-  dbInstance = getFirestore(app); 
+  console.warn("MINDSTRIDE: Firebase project ID is missing or invalid in environment variables. Firestore functionality will be disabled. The app will rely on localStorage.");
 }
 
-export const db = dbInstance;
+export const db = dbInstance; // This will be null if projectId is missing or initialization fails
 export { app /*, auth, storage */ };
+

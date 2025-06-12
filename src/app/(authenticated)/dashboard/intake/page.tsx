@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react'; // Removed useState for isSubmittingIntake
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -108,7 +108,6 @@ const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults';
 export default function IntakeFormPage() {
   const { toast } = useToast();
   const router = useRouter();
-  // Removed isSubmittingIntake local state
 
   const form = useForm<IntakeFormValues>({
     resolver: zodResolver(intakeFormSchema),
@@ -141,7 +140,6 @@ export default function IntakeFormPage() {
   const selectedTodayMood = form.watch('todayMood');
 
   const onSubmit = async (data: IntakeFormValues) => {
-    // form.formState.isSubmitting will be true here
     try {
       let finalDiagnoses: string[] = data.diagnoses || [];
       if (data.diagnosisHistory === 'Yes' && data.diagnoses?.includes('other')) {
@@ -151,17 +149,41 @@ export default function IntakeFormPage() {
         }
       }
       
-      const processedDataForStorage = {
+      const dataForLocalStorage = {
         ...data,
         location: `${data.city}, ${data.timezone}`,
         diagnoses: finalDiagnoses,
         age: Number(data.age),
         sleepPatterns: Number(data.sleepPatterns),
         currentStressLevel: Number(data.currentStressLevel),
-        updatedAt: serverTimestamp(), 
+        updatedAt: new Date().toISOString(), 
       };
+      const { city, timezone, otherDiagnosis, ...payloadToStoreInLocalStorage } = dataForLocalStorage;
+      localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStoreInLocalStorage));
+      console.log("Intake data saved to localStorage.");
+
+      if (db) {
+        const payloadForFirestore = {
+          ...payloadToStoreInLocalStorage, 
+          updatedAt: serverTimestamp(), 
+        };
+        try {
+          const userIntakeDocRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
+          await setDoc(userIntakeDocRef, payloadForFirestore, { merge: true }); 
+          console.log("Intake data also saved to Firestore.");
+        } catch (firestoreError) {
+            console.error("Failed to save intake data to Firestore:", firestoreError);
+            toast({
+                title: "Firestore Save Failed",
+                description: "Could not save data to the cloud. Your data is saved locally.",
+                variant: "destructive",
+                duration: 7000,
+            });
+        }
+      } else {
+        console.warn("Firestore is not configured. Intake data saved locally only.");
+      }
       
-      const { city, timezone, otherDiagnosis, ...payloadToStore } = processedDataForStorage;
       const payloadForAnalysis: InitialIntakeInput = {
         ...data, 
         location: `${data.city}, ${data.timezone}`, 
@@ -171,12 +193,6 @@ export default function IntakeFormPage() {
         currentStressLevel: Number(data.currentStressLevel),
       };
 
-      // Save to localStorage and Firestore
-      localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStore));
-      const userIntakeDocRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
-      await setDoc(userIntakeDocRef, payloadToStore, { merge: true }); 
-
-      // Now, AWAIT the AI Analysis
       console.log("Starting Intake Analysis...");
       const analysisOutput = await analyzeInitialIntake(payloadForAnalysis);
       localStorage.setItem(INTAKE_ANALYSIS_LS_KEY, JSON.stringify(analysisOutput));
@@ -197,9 +213,7 @@ export default function IntakeFormPage() {
         variant: "destructive",
         duration: 7000,
       });
-      // react-hook-form automatically sets form.formState.isSubmitting to false on error
     }
-    // react-hook-form automatically sets form.formState.isSubmitting to false on success/completion
   };
 
   return (
@@ -590,4 +604,3 @@ export default function IntakeFormPage() {
   );
 }
 
-    

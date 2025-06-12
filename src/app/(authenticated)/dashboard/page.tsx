@@ -14,7 +14,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { generateInsights, type InsightGeneratorInput } from '@/ai/flows/insight-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase'; // Import Firestore instance
+import { db } from '@/lib/firebase'; 
 import { doc, getDoc } from "firebase/firestore"; 
 
 interface MoodLogEntry {
@@ -94,7 +94,6 @@ export default function DashboardPage() {
     const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
     setIsPremiumUser(premiumStatus === 'true');
 
-    // Function to process and set intake data related states
     const processIntakeData = (data: IntakeData | null) => {
         setUserIntakeData(data);
         if (data) {
@@ -113,7 +112,7 @@ export default function DashboardPage() {
             } else {
                 setDisplaySleepHours("Not logged in intake");
             }
-            return data; // Return for insight generation
+            return data; 
         } else {
             setIntakeDataExists(false);
             setDisplayStressLevel("Complete intake form");
@@ -122,10 +121,9 @@ export default function DashboardPage() {
         }
     };
     
-    // Function to fetch personalized insight
     const fetchInsight = async (currentIntakeData: IntakeData | null, currentLastMoodEntry: MoodLogEntry | null) => {
       if (!currentIntakeData) {
-        setPersonalizedInsight(null); // No insight if no intake data
+        setPersonalizedInsight(null); 
         setIsLoadingInsight(false);
         return;
       }
@@ -158,40 +156,43 @@ export default function DashboardPage() {
       }
     };
 
-    // Load intake data (try Firestore first, then localStorage)
     const loadIntakeAndInsights = async () => {
       let loadedIntakeData: IntakeData | null = null;
-      try {
-        // IMPORTANT: USER_ID_PLACEHOLDER must be replaced by actual Firebase Auth user.uid
-        const docRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
-        const docSnap = await getDoc(docRef);
+      
+      if (db) { 
+        try {
+          const docRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
+          const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          console.log("Intake data loaded from Firestore");
-          loadedIntakeData = docSnap.data() as IntakeData;
-        } else {
-          console.log("No intake data in Firestore, trying localStorage.");
-          const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_KEY);
-          if (storedIntakeDataString) {
-            loadedIntakeData = JSON.parse(storedIntakeDataString);
-            console.log("Intake data loaded from localStorage");
+          if (docSnap.exists()) {
+            console.log("MINDSTRIDE: Intake data loaded from Firestore");
+            loadedIntakeData = docSnap.data() as IntakeData;
           } else {
-             console.log("No intake data in localStorage either.");
+            console.log("MINDSTRIDE: No intake data in Firestore, trying localStorage.");
           }
+        } catch (error) {
+          console.error("MINDSTRIDE: Error loading intake data from Firestore:", error);
         }
-      } catch (error) {
-        console.error("Error loading intake data:", error);
-        // Fallback to localStorage if Firestore fails for any reason
+      } else {
+         console.warn("MINDSTRIDE: Firestore not configured. Skipping Firestore read for intake data.");
+      }
+
+      if (!loadedIntakeData) {
         const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_KEY);
         if (storedIntakeDataString) {
-          loadedIntakeData = JSON.parse(storedIntakeDataString);
-           console.log("Error loading from Firestore, intake data loaded from localStorage as fallback");
+          try {
+            loadedIntakeData = JSON.parse(storedIntakeDataString);
+            console.log("MINDSTRIDE: Intake data loaded from localStorage");
+          } catch (e) {
+            console.error("MINDSTRIDE: Error parsing intake data from localStorage", e);
+          }
+        } else {
+           console.log("MINDSTRIDE: No intake data in localStorage either.");
         }
       }
       
       const processedDataForInsight = processIntakeData(loadedIntakeData);
 
-      // Load mood log for header and insights
       const moodLogString = localStorage.getItem(MOOD_LOG_KEY);
       let currentLastMoodEmoji: string | null = null;
       let currentLastMoodEntryForInsightState: MoodLogEntry | null = null;
@@ -209,10 +210,8 @@ export default function DashboardPage() {
       setLastMood(currentLastMoodEmoji);
       setLastMoodEntryForInsight(currentLastMoodEntryForInsightState);
 
-      // Fetch insight based on the loaded data
       fetchInsight(processedDataForInsight, currentLastMoodEntryForInsightState);
 
-      // Load recent activities (this part remains the same, using localStorage for now)
       const activities: ActivityItem[] = [];
       const lastAiChatString = localStorage.getItem(LAST_AI_CHAT_ACTIVITY_KEY);
       if (lastAiChatString) {
@@ -264,7 +263,7 @@ export default function DashboardPage() {
     loadIntakeAndInsights();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAIChatDialogOpen, toast]); // Re-fetch activities/insights when AI chat dialog closes or on initial load.
+  }, [isAIChatDialogOpen, toast]); 
 
 
   return (
@@ -364,7 +363,7 @@ export default function DashboardPage() {
             <Button variant="ghost" className="w-full justify-start gap-2"><BookOpen className="h-4 w-4 text-green-500"/> Article: Managing Daily Stress</Button>
             
             <div className="pt-2 text-sm">
-              {isLoadingInsight && intakeDataExists !== false && ( // Only show loading if we expect data or are fetching
+              {isLoadingInsight && intakeDataExists !== false && ( 
                 <div className="flex items-center text-muted-foreground">
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Generating your personalized insight...
@@ -373,10 +372,10 @@ export default function DashboardPage() {
               {!isLoadingInsight && personalizedInsight && intakeDataExists && (
                 <p className="text-foreground italic">"{personalizedInsight}"</p>
               )}
-              {!isLoadingInsight && !personalizedInsight && intakeDataExists === true && ( // Data exists but no insight
+              {!isLoadingInsight && !personalizedInsight && intakeDataExists === true && ( 
                  <p className="text-muted-foreground">Could not load an insight. Try refreshing.</p>
               )}
-              {intakeDataExists === false && !isLoadingInsight && ( // No intake data
+              {intakeDataExists === false && !isLoadingInsight && ( 
                  <p className="text-muted-foreground">
                   <Link href="/dashboard/intake" className="underline hover:text-primary">Complete your intake form</Link> for personalized insights.
                 </p>
@@ -466,3 +465,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
