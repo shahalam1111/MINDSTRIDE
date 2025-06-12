@@ -163,43 +163,58 @@ export default function IntakeFormPage() {
       
       const { city, timezone, otherDiagnosis, ...payloadToStore } = processedDataForStorage;
       const payloadForAnalysis: InitialIntakeInput = {
-        ...data, // Use original form data for analysis input type
-        location: `${data.city}, ${data.timezone}`, // ensure location is combined
+        ...data, 
+        location: `${data.city}, ${data.timezone}`, 
         diagnoses: finalDiagnoses,
         age: Number(data.age),
         sleepPatterns: Number(data.sleepPatterns),
         currentStressLevel: Number(data.currentStressLevel),
       };
 
-
+      // Quick Save to localStorage and Firestore
       localStorage.setItem('wellspringUserIntakeData', JSON.stringify(payloadToStore));
       const userIntakeDocRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
       await setDoc(userIntakeDocRef, payloadToStore, { merge: true }); 
 
       toast({
         title: "Intake Information Saved",
-        description: "Now analyzing your responses to personalize your experience...",
+        description: "Personalizing your experience... Redirecting to dashboard.",
       });
-
-      const analysisOutput: InitialIntakeOutput = await analyzeInitialIntake(payloadForAnalysis);
-      localStorage.setItem(INTAKE_ANALYSIS_LS_KEY, JSON.stringify(analysisOutput));
       
-      console.log("Intake Form Data saved and analyzed:", payloadToStore, analysisOutput);
-      toast({
-        title: "Analysis Complete!",
-        description: "Redirecting to your dashboard.",
-      });
-      router.push('/dashboard');
+      // Redirect immediately
+      router.push('/dashboard'); 
 
-    } catch (error) {
-      console.error("Failed to save or analyze intake form:", error);
+      // Start AI Analysis in the background (client-side, non-blocking)
+      analyzeInitialIntake(payloadForAnalysis)
+        .then(analysisOutput => {
+          localStorage.setItem(INTAKE_ANALYSIS_LS_KEY, JSON.stringify(analysisOutput));
+          console.log("Background Intake Analysis Complete. Results stored for AI Chat.", analysisOutput);
+          // Optionally, you could use a global state or another subtle mechanism
+          // to indicate to the user on the dashboard that personalization is fully ready,
+          // but for now, the AI chat will pick it up.
+        })
+        .catch(analysisError => {
+          console.error("Background Intake Analysis Failed:", analysisError);
+          // Handle error, e.g., show a non-blocking toast or log to an error service
+          // This toast might not be seen if redirection happens too fast or user navigates away
+          toast({
+            title: "Personalization Update",
+            description: "Could not complete background personalization analysis. Some AI features might be limited.",
+            variant: "default", // Non-destructive as main save succeeded
+            duration: 5000,
+          });
+        });
+        // setIsSubmittingIntake is not set to false here as the component will unmount.
+        // The button will remain in its "submitting" state until redirection.
+
+    } catch (error) { // This catch is for errors during the initial save to Firestore/localStorage
+      console.error("Failed to save intake form:", error);
       toast({
         title: "Error",
-        description: "Failed to process your intake form. Please try again.",
+        description: "Failed to save your intake form. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmittingIntake(false);
+      setIsSubmittingIntake(false); // Allow user to try submitting again if initial save fails
     }
   };
 
@@ -579,7 +594,7 @@ export default function IntakeFormPage() {
                 {isSubmittingIntake ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Saving & Analyzing...
+                    Saving & Preparing Dashboard...
                   </>
                 ) : "Save Intake Information"}
               </Button>
@@ -591,5 +606,3 @@ export default function IntakeFormPage() {
   );
 }
 
-
-    
