@@ -164,10 +164,10 @@ export default function LandingPage() {
             <Image
               src="https://sdmntprcentralus.oaiusercontent.com/files/00000000-1548-61f5-b6c9-b2732460799d/raw?se=2025-06-10T05%3A42%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=8ea7873f-031b-5213-bb88-b939c62ce50b&skoid=04233560-0ad7-493e-8bf0-1347c317d021&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-09T22%3A15%3A05Z&ske=2025-06-10T22%3A15%3A05Z&sks=b&skv=2024-08-04&sig=%2BzKNlIz%2BzRLWgzg66aLBsTIpM4stU4o3HvddclAk8jg%3D"
               alt="Abstract calming background"
-              layout="fill"
-              objectFit="cover"
+              fill
               quality={75}
               priority
+              className="object-cover"
               data-ai-hint="calming abstract"
             />
           </div>
@@ -217,7 +217,7 @@ export default function LandingPage() {
                 alt="Hopeful illustration for mental wellness journey"
                 width={600}
                 height={400}
-                className="rounded-lg shadow-xl"
+                className="rounded-lg shadow-xl object-cover"
                 data-ai-hint="wellness journey hopeful progress"
               />
             </div>
@@ -252,9 +252,8 @@ export default function LandingPage() {
                         <Image
                           src={blog.thumbnailUrl}
                           alt={blog.title}
-                          layout="fill"
-                          objectFit="cover"
-                          className="group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     </Link>
@@ -291,9 +290,8 @@ export default function LandingPage() {
                         <Image
                           src={video.thumbnailUrl}
                           alt={video.title}
-                          layout="fill"
-                          objectFit="cover"
-                          className="group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <PlayCircle className="h-16 w-16 text-white/80" />
