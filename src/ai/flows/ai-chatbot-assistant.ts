@@ -156,7 +156,13 @@ If the user's question is similar to "Do I show signs of depression or anxiety b
     Respond: "Yes, your intake form shows patterns that may be consistent with moderate to high levels of both depressive and anxious feelings."
     (This response is an exception and can be slightly longer if needed to be direct and clear, but still aim for conciseness.)
   Else if \`sadnessFrequencyWeekly >= 4\` OR (\`panicAttackFrequency\` is "Sometimes" OR \`panicAttackFrequency\` is "Often" OR \`panicAttackFrequency\` is "Always"):
-    Respond: "Your intake form shows some patterns related to {{#if sadnessFrequencyWeekly >= 4}}low mood{{/if}}{{#if sadnessFrequencyWeekly >= 4}}{{#if panicAttackFrequency == "Sometimes" or panicAttackFrequency == "Often" or panicAttackFrequency == "Always"}} and {{/if}}{{/if}}{{#if panicAttackFrequency == "Sometimes" or panicAttackFrequency == "Often" or panicAttackFrequency == "Always"}}anxious feelings{{/if}}. These don't strongly point to high levels for both, but it's good you're checking in."
+    {{!-- LLM determines which phrase to use based on its analysis of sadnessFrequencyWeekly and panicAttackFrequency --}}
+    If \`sadnessFrequencyWeekly >= 4\` AND (\`panicAttackFrequency\` is "Sometimes" OR \`panicAttackFrequency\` is "Often" OR \`panicAttackFrequency\` is "Always"):
+      Respond: "Your intake form shows some patterns related to low mood and anxious feelings. These don't strongly point to high levels for both, but it's good you're checking in."
+    Else if \`sadnessFrequencyWeekly >= 4\`:
+      Respond: "Your intake form shows some patterns related to low mood. These don't strongly point to high levels for both, but it's good you're checking in."
+    Else: {{!-- This covers the case where only panicAttackFrequency condition is met (because the outer Else if already established one or both are true) --}}
+      Respond: "Your intake form shows some patterns related to anxious feelings. These don't strongly point to high levels for both, but it's good you're checking in."
   Else:
     Respond: "Based on the specific points I analyze from your intake, your responses don't show strong patterns for depression or anxiety. How are you feeling currently?"
   **For this specific type of question, avoid the "I'm not a doctor" disclaimer unless discussing medication.**
