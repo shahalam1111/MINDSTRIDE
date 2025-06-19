@@ -55,7 +55,7 @@ const WeeklyAverageDataPointSchema = z.object({
 
 const MonthlyInsightEntrySchema = z.object({
   month: z.string().describe("Month in 'Month YYYY' format (e.g., June 2025)."),
-  trend: z.string().optional().describe("Overall trend summary for the month for key indicators."),
+  trend: z.string().optional().describe("Overall trend summary for the month for key indicators (1-2 sentences max)."),
   status: z.string().optional().describe("Overall status for the month (e.g., Improving, Declining, Stable)."),
   sadnessAvg: z.number().optional(),
   anxietyAvg: z.number().optional(),
@@ -66,14 +66,14 @@ const MonthlyInsightEntrySchema = z.object({
 
 const RecommendationSchema = z.object({
   type: z.enum(["Insight", "Action"]).describe("Type of recommendation: 'Insight' for observations, 'Action' for suggestions."),
-  text: z.string().describe("The content of the insight or actionable suggestion."),
+  text: z.string().describe("The content of the insight or actionable suggestion (1-2 sentences max)."),
 });
 
 const ProgressReportGeneratorOutputSchema = z.object({
   userId: z.string().describe("The user's ID, passed from input."),
   reportId: z.string().describe("A unique identifier for this report (e.g., 'report_YYYYMMDD_HHMMSS_userId')."),
   timestamp: z.string().datetime().describe("Timestamp of when the report was generated."),
-  summary: z.string().describe("A concise overall progress summary (3-4 sentences max)."),
+  summary: z.string().describe("A concise overall progress summary (strictly 3-4 sentences maximum)."),
   dailyChartData: z.array(DailyChartDataPointSchema).describe("Data for daily trends chart, showing the last 7 entries/days with data."),
   weeklyAverages: z.array(WeeklyAverageDataPointSchema).describe("Data for weekly averages chart, showing the last 4 weeks with data."),
   monthlyInsights: z.array(MonthlyInsightEntrySchema).describe("Summary and insights for the last 3 months with data."),
@@ -95,7 +95,7 @@ The input JSON includes a user's intake form history. Each submission is timesta
 **Your Responsibilities & Instructions:**
 
 1.  **Data Grouping & Aggregation:**
-    *   Process the \`history\` array. Group responses by day, week, and month using the \`timestamp\` of each entry.
+    *   Process the \`history\` array from \`actualUserInput.history\`. Group responses by day, week, and month using the \`timestamp\` of each entry.
     *   When calculating weekly or monthly averages, if multiple entries exist within the same day, average them first for that day before including in weekly/monthly calculations.
 
 2.  **Indicator Analysis:**
@@ -118,38 +118,42 @@ The input JSON includes a user's intake form history. Each submission is timesta
 4.  **Generate Chart-Ready Data:**
     *   \`dailyChartData\`: Provide data for the **last 7 distinct dates** for which entries exist in the history. For each date, include the (potentially day-averaged) scores for sadness, anxiety (numeric), stress, hopefulness, and sleep (numeric). Format dates as "YYYY-MM-DD".
     *   \`weeklyAverages\`: Provide data for the **last 4 distinct weeks** for which entries exist. Calculate the average scores for sadness, anxiety (numeric), stress, hopefulness, and sleep (numeric) for each week. Format weeks as "YYYY-Www" (e.g., "2025-W23").
-    *   \`monthlyInsights\`: Provide a summary for up to the **last 3 distinct months** for which entries exist. For each month, include average scores and a brief textual \`trend\` (e.g., "Sadness and stress levels have gradually declined.") and \`status\` (e.g., "Improving", "Declining", "Stable"). Format month as "Month YYYY" (e.g., "June 2025").
+    *   \`monthlyInsights\`: Provide a summary for up to the **last 3 distinct months** for which entries exist. For each month, include average scores and a brief textual \`trend\` (**1-2 sentences maximum for trend**) and \`status\` (e.g., "Improving", "Declining", "Stable"). Format month as "Month YYYY" (e.g., "June 2025").
 
 5.  **Generate Textual Report Components:**
     *   \`summary\`: A concise overall progress summary (strictly 3-4 sentences maximum). This should be a high-level overview.
     *   \`recommendations\`: A list containing:
         *   2-3 personalized insights (\`type: "Insight"\`) based on observed trend shifts or significant patterns (e.g., "Hopefulness score increased by 2 points over 2 weeks when sleep improved.").
-        *   2 practical suggestions (\`type: "Action"\`) to support mental health improvement, tailored to the user's trends (e.g., "Maintain a consistent sleep routine and light exercise if stress levels are trending up."). Keep text concise.
+        *   2 practical suggestions (\`type: "Action"\`) to support mental health improvement, tailored to the user's trends (e.g., "Maintain a consistent sleep routine and light exercise if stress levels are trending up.").
+        *   Keep all \`text\` fields for recommendations to 1-2 sentences maximum.
 
 6.  **Output Generation:**
-    *   The **ENTIRE output MUST be a single, valid JSON object** adhering to the specified Output Format. Do NOT include any non-JSON text, explanations, apologies, or conversational filler before or after the JSON output.
-    *   Generate a unique \`reportId\` (e.g., "report_YYYYMMDDHHMMSS_userId").
+    *   The **ENTIRE output MUST be a single, valid JSON object** adhering to the specified Output Format.
+    *   **Crucially, ensure ALL required fields from the Output Schema are present in your JSON response: \`userId\`, \`reportId\`, \`timestamp\`, \`summary\`, \`dailyChartData\`, \`weeklyAverages\`, \`monthlyInsights\`, and \`recommendations\`.**
+    *   Copy the \`userId\` from the \`actualUserInput.userId\` field.
+    *   Generate a unique \`reportId\` using the format "report_YYYYMMDDHHMMSS_userId" (e.g., "report_20250618225700_user123").
     *   The top-level \`timestamp\` in the output should be the current ISO 8601 datetime when the report is generated.
     *   Ensure all field names and data types in your JSON output strictly match the defined Output Schema.
+    *   Do NOT include any non-JSON text, explanations, apologies, or conversational filler before or after the JSON output.
 
-**Input Format Example (Illustrative - actual input will have more history items):**
+**Input Format Example (Illustrative - from \`inputExampleForDoc\`):**
 \`\`\`json
-{{{jsonEncode inputExample}}}
+{{{jsonEncode inputExampleForDoc}}}
 \`\`\`
 
 **Output Format (Your output must strictly follow this structure and field names):**
 (The schema definition provided to you by the system defines this structure. Adhere to it.)
 
-The user's full input to analyze is:
+The user's full input to analyze is in the \`actualUserInput\` field:
 \`\`\`json
-{{{jsonEncode input}}}
+{{{jsonEncode actualUserInput}}}
 \`\`\`
 
 Produce ONLY the JSON output.
 `;
 
-// Placeholder example for the prompt, actual input will be `input`
-const inputExample = {
+// Placeholder example for the prompt, actual input will be in `actualUserInput`
+const inputExampleForDoc = {
   userId: "user123",
   history: [
     {
@@ -159,6 +163,10 @@ const inputExample = {
     {
       timestamp: "2025-06-08T11:00:00Z",
       responses: { q1_sadnessLevel: 5, q2_anxietyFrequency: "Sometimes", q5_stressLevel: 6, q6_sleepHours: "6-8", q17_hopefulness: 4 }
+    },
+     {
+      timestamp: "2025-06-15T12:00:00Z",
+      responses: { q1_sadnessLevel: 4, q2_anxietyFrequency: "Rarely", q5_stressLevel: 5, q6_sleepHours: "6-8", q17_hopefulness: 6 }
     }
   ]
 };
@@ -173,12 +181,12 @@ const progressReportGeneratorFlow = ai.defineFlow(
   async (input) => {
     const {output} = await ai.generate({
         prompt: promptContent,
-        input: {input, inputExample}, // Pass both actual input and the example for the prompt context
+        input: { actualUserInput: input, inputExampleForDoc }, 
         output: { schema: ProgressReportGeneratorOutputSchema },
         config: {
           temperature: 0.3,
           topP: 0.8,
-          maxOutputTokens: 2048, // Increased slightly for potentially complex JSON
+          maxOutputTokens: 2048, 
         }
     });
     
@@ -188,3 +196,4 @@ const progressReportGeneratorFlow = ai.defineFlow(
     return output;
   }
 );
+
