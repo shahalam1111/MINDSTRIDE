@@ -185,10 +185,12 @@ const analyzeInitialIntakeFlow = ai.defineFlow(
         prompt: promptContent,
         input: input, // Pass the validated input directly
         output: { schema: InitialIntakeAnalyzerOutputSchema },
-        // Consider adding safety settings if needed, though this prompt is analytical
-        // config: {
-        //   safetySettings: [{ category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }] 
-        // }
+        config: {
+          temperature: 0.3,
+          maxOutputTokens: 2048,
+          // Example safety setting, uncomment and adjust if needed:
+          // safetySettings: [{ category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }] 
+        }
     });
     
     // The 'output' here should already be parsed by Genkit if the LLM respected the JSON output instruction and schema.
@@ -199,3 +201,5 @@ const analyzeInitialIntakeFlow = ai.defineFlow(
     return output;
   }
 );
+
+
