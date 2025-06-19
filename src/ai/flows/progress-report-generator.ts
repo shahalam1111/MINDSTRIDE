@@ -118,14 +118,14 @@ The input JSON includes a user's intake form history. Each submission is timesta
 4.  **Generate Chart-Ready Data:**
     *   \`dailyChartData\`: Provide data for the **last 7 distinct dates** for which entries exist in the history. For each date, include the (potentially day-averaged) scores for sadness, anxiety (numeric), stress, hopefulness, and sleep (numeric). Format dates as "YYYY-MM-DD".
     *   \`weeklyAverages\`: Provide data for the **last 4 distinct weeks** for which entries exist. Calculate the average scores for sadness, anxiety (numeric), stress, hopefulness, and sleep (numeric) for each week. Format weeks as "YYYY-Www" (e.g., "2025-W23").
-    *   \`monthlyInsights\`: Provide a summary for up to the **last 3 distinct months** for which entries exist. For each month, include average scores and a brief textual \`trend\` (**1-2 sentences maximum for trend**) and \`status\` (e.g., "Improving", "Declining", "Stable"). Format month as "Month YYYY" (e.g., "June 2025").
+    *   \`monthlyInsights\`: Provide a summary for up to the **last 3 distinct months** for which entries exist. For each month, include average scores and a brief textual \`trend\` (**strictly 1-2 sentences maximum for trend**) and \`status\` (e.g., "Improving", "Declining", "Stable"). Format month as "Month YYYY" (e.g., "June 2025").
 
 5.  **Generate Textual Report Components:**
     *   \`summary\`: A concise overall progress summary (strictly 3-4 sentences maximum). This should be a high-level overview.
     *   \`recommendations\`: A list containing:
         *   2-3 personalized insights (\`type: "Insight"\`) based on observed trend shifts or significant patterns (e.g., "Hopefulness score increased by 2 points over 2 weeks when sleep improved.").
         *   2 practical suggestions (\`type: "Action"\`) to support mental health improvement, tailored to the user's trends (e.g., "Maintain a consistent sleep routine and light exercise if stress levels are trending up.").
-        *   Keep all \`text\` fields for recommendations to 1-2 sentences maximum.
+        *   Keep all \`text\` fields for recommendations to **strictly 1-2 sentences maximum**.
 
 6.  **Output Generation:**
     *   The **ENTIRE output MUST be a single, valid JSON object** adhering to the specified Output Format.
