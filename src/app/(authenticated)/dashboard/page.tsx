@@ -39,40 +39,69 @@ interface ActivityItem {
 }
 
 interface IntakeData {
+  // Existing fields
   fullName?: string;
   age?: number;
   gender?: string;
   location?: string;
   diagnosisHistory?: string;
-  diagnoses?: string[];
+  diagnoses?: string[] | string; // Can be array or comma-separated string from AI context
   currentTreatment?: string;
-  sleepPatterns?: number;
+  sleepPatterns?: number; // Existing sleep value (3-12 scale)
   exerciseFrequency?: string;
   substanceUse?: string;
-  currentStressLevel?: number;
+  currentStressLevel?: number; // Overall stress level
   todayMood?: string; // Emoji
-  frequentEmotions?: string[];
-  supportAreas?: string[];
-  contentPreferences?: string[];
+  frequentEmotions?: string[] | string;
+  supportAreas?: string[] | string;
+  contentPreferences?: string[] | string;
   checkInFrequency?: string;
   preferredTime?: string;
   additionalInformation?: string;
-  updatedAt?: any; // Can be Firestore Timestamp or Date string from localStorage
+  updatedAt?: any; 
+
+  // New fields from expanded intake
+  sadnessFrequencyWeekly?: number;
+  panicAttackFrequency?: string;
+  moodTodayDetailed?: string;
+  otherMoodToday?: string;
+  hopelessPastTwoWeeks?: string;
+  hopelessDescription?: string;
+  currentWorryIntensity?: number;
+  averageSleepHoursNightly?: string; // e.g., '6-8 hours'
+  appetiteChanges?: string;
+  socialAvoidanceFrequency?: number; // 1-5 scale
+  repetitiveBehaviors?: string;
+  repetitiveBehaviorsDescription?: string;
+  exerciseFrequencyDetailed?: string;
+  physicalSymptomsFrequency?: number; // 1-5 scale
+  substanceUseCoping?: string;
+  workSchoolStressLevel?: number; // 1-10 scale
+  concentrationDifficultyFrequency?: number; // 1-5 scale
+  recurringNegativeThoughts?: string;
+  negativeThoughtsDescription?: string;
+  overwhelmedByTasksFrequency?: number; // 1-5 scale
+  hopefulnessFuture?: number; // 1-10 scale
+  mentalHealthMedication?: string;
+  medicationDetails?: string;
+  socialSupportAvailability?: string;
+  recentLifeChanges?: string;
+  lifeChangesDescription?: string;
 }
 
 
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const MOOD_LOG_KEY = 'wellspringUserMoodLog';
-const INTAKE_DATA_KEY = 'wellspringUserIntakeData'; // localStorage key
-const USER_ID_PLACEHOLDER = "mockUserId"; // Replace with actual user ID from Firebase Auth later
+const INTAKE_DATA_KEY = 'wellspringUserIntakeData'; 
+const USER_ID_PLACEHOLDER = "mockUserId"; 
 
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [intakeDataExists, setIntakeDataExists] = useState<boolean | null>(null);
   const [userIntakeData, setUserIntakeData] = useState<IntakeData | null>(null);
-  const [lastMood, setLastMood] = useState<string | null>(null); // Store emoji for header
-  const [lastMoodEntryForInsight, setLastMoodEntryForInsight] = useState<MoodLogEntry | null>(null); // Store full entry for insight
+  const [lastMood, setLastMood] = useState<string | null>(null); 
+  const [lastMoodEntryForInsight, setLastMoodEntryForInsight] = useState<MoodLogEntry | null>(null); 
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [isAIChatDialogOpen, setIsAIChatDialogOpen] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState<boolean>(false);
@@ -98,17 +127,34 @@ export default function DashboardPage() {
         setUserIntakeData(data);
         if (data) {
             setIntakeDataExists(true);
-            if (typeof data.currentStressLevel === 'number') {
-                const level = data.currentStressLevel;
-                if (level <= 3) setDisplayStressLevel(`Low (${level}/10)`);
-                else if (level <= 7) setDisplayStressLevel(`Moderate (${level}/10)`);
-                else setDisplayStressLevel(`High (${level}/10)`);
+            
+            // Determine stress display: use workSchoolStressLevel if available, then currentWorryIntensity, then currentStressLevel
+            let stressToDisplay: number | undefined = undefined;
+            let stressSource: string = "";
+            if (typeof data.workSchoolStressLevel === 'number') {
+                stressToDisplay = data.workSchoolStressLevel;
+                stressSource = " (Work/School)";
+            } else if (typeof data.currentWorryIntensity === 'number') {
+                stressToDisplay = data.currentWorryIntensity;
+                stressSource = " (Worry Intensity)";
+            } else if (typeof data.currentStressLevel === 'number') {
+                stressToDisplay = data.currentStressLevel;
+                stressSource = " (Overall)";
+            }
+
+            if (typeof stressToDisplay === 'number') {
+                if (stressToDisplay <= 3) setDisplayStressLevel(`Low (${stressToDisplay}/10)${stressSource}`);
+                else if (stressToDisplay <= 7) setDisplayStressLevel(`Moderate (${stressToDisplay}/10)${stressSource}`);
+                else setDisplayStressLevel(`High (${stressToDisplay}/10)${stressSource}`);
             } else {
                 setDisplayStressLevel("Not logged in intake");
             }
 
-            if (typeof data.sleepPatterns === 'number') {
-                setDisplaySleepHours(`${data.sleepPatterns} hours`);
+            // Determine sleep display: use averageSleepHoursNightly if available, then sleepPatterns
+            if (data.averageSleepHoursNightly) {
+                setDisplaySleepHours(`${data.averageSleepHoursNightly}`);
+            } else if (typeof data.sleepPatterns === 'number') {
+                setDisplaySleepHours(`${data.sleepPatterns} hours (avg)`);
             } else {
                 setDisplaySleepHours("Not logged in intake");
             }
@@ -132,14 +178,21 @@ export default function DashboardPage() {
         let summaryParts = [];
         if (currentIntakeData.fullName) summaryParts.push(`Name: ${currentIntakeData.fullName}`);
         if (currentIntakeData.age) summaryParts.push(`Age: ${currentIntakeData.age}`);
-        if (currentIntakeData.supportAreas && currentIntakeData.supportAreas.length > 0) summaryParts.push(`Seeks support in: ${currentIntakeData.supportAreas.join(', ')}`);
-        if (currentIntakeData.frequentEmotions && currentIntakeData.frequentEmotions.length > 0) summaryParts.push(`Often feels: ${currentIntakeData.frequentEmotions.join(', ')}`);
-        if (currentIntakeData.todayMood) summaryParts.push(`Reported mood on intake: ${currentIntakeData.todayMood}`);
+        if (currentIntakeData.supportAreas && currentIntakeData.supportAreas.length > 0) {
+             const support = Array.isArray(currentIntakeData.supportAreas) ? currentIntakeData.supportAreas.join(', ') : currentIntakeData.supportAreas;
+             summaryParts.push(`Seeks support in: ${support}`);
+        }
+        if (currentIntakeData.frequentEmotions && currentIntakeData.frequentEmotions.length > 0) {
+            const emotions = Array.isArray(currentIntakeData.frequentEmotions) ? currentIntakeData.frequentEmotions.join(', ') : currentIntakeData.frequentEmotions;
+            summaryParts.push(`Often feels: ${emotions}`);
+        }
+        if (currentIntakeData.todayMood) summaryParts.push(`Reported mood on intake (quick): ${currentIntakeData.todayMood}`);
+        if (currentIntakeData.moodTodayDetailed) summaryParts.push(`Reported detailed mood on intake: ${currentIntakeData.moodTodayDetailed}`);
         
         const insightInput: InsightGeneratorInput = {
           intakeSummary: summaryParts.length > 0 ? summaryParts.join('. ') : "User has provided some intake information.",
-          lastMood: currentLastMoodEntry?.mood || currentIntakeData.todayMood,
-          currentStressLevel: currentIntakeData.currentStressLevel,
+          lastMood: currentLastMoodEntry?.mood || currentIntakeData.moodTodayDetailed || currentIntakeData.todayMood,
+          currentStressLevel: currentIntakeData.workSchoolStressLevel ?? currentIntakeData.currentWorryIntensity ?? currentIntakeData.currentStressLevel,
         };
         const result = await generateInsights(insightInput);
         setPersonalizedInsight(result.insightText);
@@ -207,11 +260,12 @@ export default function DashboardPage() {
           if (moodLog.length > 0) {
             const sortedMoodLog = moodLog.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             currentLastMoodEntryForInsightState = sortedMoodLog[0];
-            currentLastMoodEmoji = currentLastMoodEntryForInsightState.mood;
+            currentLastMoodEmoji = currentLastMoodEntryForInsightState.mood; // This is the emoji from mood check-in
           }
         } catch (e) { console.error("Error parsing mood log", e); }
       }
-      setLastMood(currentLastMoodEmoji);
+      // Prioritize mood from check-in, then detailed intake mood, then quick intake mood
+      setLastMood(currentLastMoodEmoji || loadedIntakeData?.moodTodayDetailed || loadedIntakeData?.todayMood || null);
       setLastMoodEntryForInsight(currentLastMoodEntryForInsightState);
 
       fetchInsight(processedDataForInsight, currentLastMoodEntryForInsightState);
@@ -285,7 +339,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {lastMood && (
-                <span className="text-3xl" title="Your last logged mood">{lastMood}</span>
+                <span className="text-3xl" title={`Your last logged mood: ${lastMood}`}>{lastMood.length > 2 ? lastMood.substring(0,2) : lastMood}</span>
               )}
               <Button variant="outline" size="icon" onClick={() => setIsAIChatDialogOpen(true)} title="AI Chat Assistant">
                 <MessageCircle className="h-5 w-5" />
@@ -342,7 +396,7 @@ export default function DashboardPage() {
           <CardContent className="flex-grow">
             <p className="text-muted-foreground mb-3">How are you feeling right now?</p>
             <div className="flex items-center gap-2 mb-4">
-                 <span className="text-2xl p-2 bg-muted rounded-md">{lastMood || '🤔'}</span>
+                 <span className="text-2xl p-2 bg-muted rounded-md" title={`Last mood: ${lastMood || 'Not logged'}`}>{lastMood ? (lastMood.length > 2 ? lastMood.substring(0,2) : lastMood) : '🤔'}</span>
                  <span className="text-sm text-muted-foreground">{lastMood ? `Last mood: ${lastMood}` : 'Log your mood!'}</span>
             </div>
             <div className="space-y-2">

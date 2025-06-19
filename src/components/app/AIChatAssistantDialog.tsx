@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { aiChatbotAssistant, type AIChatbotAssistantInput } from '@/ai/flows/ai-chatbot-assistant';
-import type { InitialIntakeOutput } from '@/ai/flows/initial-intake-analyzer'; // Import type
+import type { InitialIntakeOutput } from '@/ai/flows/initial-intake-analyzer'; 
 import { Send, Loader2, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
@@ -30,11 +30,61 @@ interface AiChatHistoryEntry {
   timestamp: string; // ISO string
 }
 
+// Define a more comprehensive type for the intake data stored in localStorage
+interface StoredIntakeData {
+  fullName?: string;
+  age?: number;
+  gender?: string;
+  location?: string;
+  diagnosisHistory?: string;
+  diagnoses?: string[] | string; // Could be array or comma-separated string
+  currentTreatment?: string;
+  sleepPatterns?: number; // Existing
+  exerciseFrequency?: string; // Existing
+  substanceUse?: string; // Existing
+  currentStressLevel?: number; // Existing
+  todayMood?: string; // Emoji mood
+  frequentEmotions?: string[] | string;
+  supportAreas?: string[] | string;
+  contentPreferences?: string[] | string;
+  additionalInformation?: string;
+
+  // New fields
+  sadnessFrequencyWeekly?: number;
+  panicAttackFrequency?: string;
+  moodTodayDetailed?: string;
+  otherMoodToday?: string;
+  hopelessPastTwoWeeks?: string;
+  hopelessDescription?: string;
+  currentWorryIntensity?: number;
+  averageSleepHoursNightly?: string;
+  appetiteChanges?: string;
+  socialAvoidanceFrequency?: number;
+  repetitiveBehaviors?: string;
+  repetitiveBehaviorsDescription?: string;
+  exerciseFrequencyDetailed?: string;
+  physicalSymptomsFrequency?: number;
+  substanceUseCoping?: string;
+  workSchoolStressLevel?: number;
+  concentrationDifficultyFrequency?: number;
+  recurringNegativeThoughts?: string;
+  negativeThoughtsDescription?: string;
+  overwhelmedByTasksFrequency?: number;
+  hopefulnessFuture?: number;
+  mentalHealthMedication?: string;
+  medicationDetails?: string;
+  socialSupportAvailability?: string;
+  recentLifeChanges?: string;
+  lifeChangesDescription?: string;
+}
+
+
 const WELCOME_MESSAGE_ID = "ai-welcome-message";
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const AI_CHAT_HISTORY_KEY = 'wellspringUserAiChatHistory';
 const MAX_AI_HISTORY_LENGTH = 20;
 const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults';
+const INTAKE_DATA_LS_KEY = 'wellspringUserIntakeData';
 
 
 const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
@@ -147,14 +197,13 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           }
           analysisMessage += "How do these initial thoughts resonate with you, or what's on your mind today?";
           initialAiText = analysisMessage;
-          newWelcomeMessageId = `ai-welcome-analyzed-${Date.now()}`; // Unique ID for analysis message
+          newWelcomeMessageId = `ai-welcome-analyzed-${Date.now()}`; 
           localStorage.removeItem(INTAKE_ANALYSIS_LS_KEY); 
         } catch (e) {
           console.error("Error parsing intake analysis results for chat dialog", e);
         }
       }
 
-      // Update messages if it's the first time opening, or if the initial message needs to change
       if (messages.length === 0 || (messages.length > 0 && messages[0].id !== newWelcomeMessageId && initialAiText !== messages[0].text)) {
            setMessages([
               {
@@ -166,7 +215,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
             ]);
       }
     }
-  }, [open]); // Re-run when dialog opens
+  }, [open, messages]);
 
 
   useEffect(() => {
@@ -190,25 +239,60 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
 
     try {
       let intakeDataForAIChat: Partial<AIChatbotAssistantInput> = {};
-      const storedIntakeData = localStorage.getItem('wellspringUserIntakeData');
-      if (storedIntakeData) {
-        const parsedIntakeData = JSON.parse(storedIntakeData);
+      const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_LS_KEY);
+      if (storedIntakeDataString) {
+        const parsedIntakeData: StoredIntakeData = JSON.parse(storedIntakeDataString);
+        
+        const formatArrayToString = (value: string[] | string | undefined): string | undefined => {
+            if (Array.isArray(value)) return value.join(', ');
+            return value;
+        };
+
         intakeDataForAIChat = {
           name: parsedIntakeData.fullName,
           age: parsedIntakeData.age,
           gender: parsedIntakeData.gender,
           location: parsedIntakeData.location,
           diagnosisHistory: parsedIntakeData.diagnosisHistory,
-          diagnoses: Array.isArray(parsedIntakeData.diagnoses) ? parsedIntakeData.diagnoses.join(', ') : parsedIntakeData.diagnoses,
+          diagnoses: formatArrayToString(parsedIntakeData.diagnoses),
           currentTreatment: parsedIntakeData.currentTreatment,
           sleepPatterns: parsedIntakeData.sleepPatterns,
           exerciseFrequency: parsedIntakeData.exerciseFrequency,
           substanceUse: parsedIntakeData.substanceUse,
           currentStressLevel: parsedIntakeData.currentStressLevel,
           todayMood: parsedIntakeData.todayMood,
-          frequentEmotions: Array.isArray(parsedIntakeData.frequentEmotions) ? parsedIntakeData.frequentEmotions.join(', ') : parsedIntakeData.frequentEmotions,
-          supportAreas: Array.isArray(parsedIntakeData.supportAreas) ? parsedIntakeData.supportAreas.join(', ') : parsedIntakeData.supportAreas,
-          contentPreferences: Array.isArray(parsedIntakeData.contentPreferences) ? parsedIntakeData.contentPreferences.join(', ') : parsedIntakeData.contentPreferences,
+          frequentEmotions: formatArrayToString(parsedIntakeData.frequentEmotions),
+          supportAreas: formatArrayToString(parsedIntakeData.supportAreas),
+          contentPreferences: formatArrayToString(parsedIntakeData.contentPreferences),
+          additionalInformation: parsedIntakeData.additionalInformation,
+
+          // New fields
+          sadnessFrequencyWeekly: parsedIntakeData.sadnessFrequencyWeekly,
+          panicAttackFrequency: parsedIntakeData.panicAttackFrequency,
+          moodTodayDetailed: parsedIntakeData.moodTodayDetailed,
+          otherMoodToday: parsedIntakeData.otherMoodToday,
+          hopelessPastTwoWeeks: parsedIntakeData.hopelessPastTwoWeeks,
+          hopelessDescription: parsedIntakeData.hopelessDescription,
+          currentWorryIntensity: parsedIntakeData.currentWorryIntensity,
+          averageSleepHoursNightly: parsedIntakeData.averageSleepHoursNightly,
+          appetiteChanges: parsedIntakeData.appetiteChanges,
+          socialAvoidanceFrequency: parsedIntakeData.socialAvoidanceFrequency,
+          repetitiveBehaviors: parsedIntakeData.repetitiveBehaviors,
+          repetitiveBehaviorsDescription: parsedIntakeData.repetitiveBehaviorsDescription,
+          exerciseFrequencyDetailed: parsedIntakeData.exerciseFrequencyDetailed,
+          physicalSymptomsFrequency: parsedIntakeData.physicalSymptomsFrequency,
+          substanceUseCoping: parsedIntakeData.substanceUseCoping,
+          workSchoolStressLevel: parsedIntakeData.workSchoolStressLevel,
+          concentrationDifficultyFrequency: parsedIntakeData.concentrationDifficultyFrequency,
+          recurringNegativeThoughts: parsedIntakeData.recurringNegativeThoughts,
+          negativeThoughtsDescription: parsedIntakeData.negativeThoughtsDescription,
+          overwhelmedByTasksFrequency: parsedIntakeData.overwhelmedByTasksFrequency,
+          hopefulnessFuture: parsedIntakeData.hopefulnessFuture,
+          mentalHealthMedication: parsedIntakeData.mentalHealthMedication,
+          medicationDetails: parsedIntakeData.medicationDetails,
+          socialSupportAvailability: parsedIntakeData.socialSupportAvailability,
+          recentLifeChanges: parsedIntakeData.recentLifeChanges,
+          lifeChangesDescription: parsedIntakeData.lifeChangesDescription,
         };
       }
       
@@ -339,5 +423,3 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
   );
 }
 
-
-    
