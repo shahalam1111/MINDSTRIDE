@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { aiChatbotAssistant, type AIChatbotAssistantInput } from '@/ai/flows/ai-chatbot-assistant';
-import type { InitialIntakeOutput } from '@/ai/flows/initial-intake-analyzer'; 
-import { Send, Loader2, ShieldAlert } from 'lucide-react';
+import type { InitialIntakeAnalyzerOutput } from '@/ai/flows/initial-intake-analyzer'; 
+import { Send, Loader2, ShieldAlert, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { EmergencySupportDialog } from '@/components/app/emergency-support-dialog';
 
@@ -32,24 +32,30 @@ interface AiChatHistoryEntry {
 
 // Define a more comprehensive type for the intake data stored in localStorage
 interface StoredIntakeData {
+  // This should align with IntakeFormValues from intake/page.tsx
+  // and be used to populate AIChatbotAssistantInput
   fullName?: string;
   age?: number;
   gender?: string;
-  location?: string;
+  city?: string;
+  timezone?: string;
   diagnosisHistory?: string;
-  diagnoses?: string[] | string; // Could be array or comma-separated string
+  diagnoses?: string[];
+  otherDiagnosis?: string;
   currentTreatment?: string;
-  sleepPatterns?: number; // Existing
-  exerciseFrequency?: string; // Existing
-  substanceUse?: string; // Existing
-  currentStressLevel?: number; // Existing
-  todayMood?: string; // Emoji mood
-  frequentEmotions?: string[] | string;
-  supportAreas?: string[] | string;
-  contentPreferences?: string[] | string;
+  sleepPatterns_original?: number;
+  exerciseFrequency_original?: string;
+  substanceUse_original?: string;
+  currentStressLevel_original?: number;
+  todayMood_original_emoji?: string;
+  frequentEmotions?: string[];
+  supportAreas?: string[];
+  contentPreferences?: string[];
+  checkInFrequency?: string;
+  preferredTime?: string;
   additionalInformation?: string;
 
-  // New fields
+  // New Q1-Q20 fields
   sadnessFrequencyWeekly?: number;
   panicAttackFrequency?: string;
   moodTodayDetailed?: string;
@@ -59,23 +65,24 @@ interface StoredIntakeData {
   currentWorryIntensity?: number;
   averageSleepHoursNightly?: string;
   appetiteChanges?: string;
-  socialAvoidanceFrequency?: number;
+  socialAvoidanceFrequency?: number; // 1-5 scale
   repetitiveBehaviors?: string;
   repetitiveBehaviorsDescription?: string;
   exerciseFrequencyDetailed?: string;
-  physicalSymptomsFrequency?: number;
+  physicalSymptomsFrequency?: number; // 1-5 scale
   substanceUseCoping?: string;
   workSchoolStressLevel?: number;
-  concentrationDifficultyFrequency?: number;
+  concentrationDifficultyFrequency?: number; // 1-5 scale
   recurringNegativeThoughts?: string;
   negativeThoughtsDescription?: string;
-  overwhelmedByTasksFrequency?: number;
+  overwhelmedByTasksFrequency?: number; // 1-5 scale
   hopefulnessFuture?: number;
   mentalHealthMedication?: string;
   medicationDetails?: string;
   socialSupportAvailability?: string;
   recentLifeChanges?: string;
   lifeChangesDescription?: string;
+  // location will be derived from city + timezone
 }
 
 
@@ -83,8 +90,9 @@ const WELCOME_MESSAGE_ID = "ai-welcome-message";
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const AI_CHAT_HISTORY_KEY = 'wellspringUserAiChatHistory';
 const MAX_AI_HISTORY_LENGTH = 20;
-const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults';
-const INTAKE_DATA_LS_KEY = 'wellspringUserIntakeData';
+const INTAKE_ANALYSIS_LS_KEY = 'wellspringIntakeAnalysisResults'; // Stores InitialIntakeAnalyzerOutput (JSON report)
+const INTAKE_DATA_LS_KEY = 'wellspringUserIntakeData'; // Stores raw form values (StoredIntakeData)
+const SCALE_1_5_LABELS_FOR_CHAT: Record<number, string> = { 1: "Never", 2: "Rarely", 3: "Sometimes", 4: "Often", 5: "Always" };
 
 
 const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
@@ -134,6 +142,15 @@ const MarkdownLineRenderer: React.FC<{ line: string }> = ({ line }) => {
       </p>
     );
   }
+  
+  const subHeadingMatch = trimmedLine.match(/^\s*\*\*(.+?)\*\*\s*$/); // For **Key Mental Health Observations:**
+  if (subHeadingMatch && !trimmedLine.includes(':')) { // Avoid matching field labels
+    const text = subHeadingMatch[1];
+     return (
+      <h4 className="text-md font-semibold mt-2 mb-1 text-primary">{text}</h4>
+    );
+  }
+
 
   const bulletMatch = trimmedLine.match(/^\s*([*-])\s+(.*)/);
   if (bulletMatch) {
@@ -177,30 +194,48 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
 
       if (analysisResultsString) {
         try {
-          const results: InitialIntakeOutput = JSON.parse(analysisResultsString);
-          let analysisMessage = "I've reviewed your recent intake information and have some initial thoughts and recommendations based on what you shared:\n\n";
+          const report: InitialIntakeAnalyzerOutput = JSON.parse(analysisResultsString);
+          let analysisMessage = "I've reviewed the insights from your recent intake form. Here's a brief summary:\n\n";
           
-          if (results.keyConcerns && results.keyConcerns.length > 0) {
-            analysisMessage += "**Key Areas We Could Focus On:**\n";
-            results.keyConcerns.forEach(concern => analysisMessage += `* ${concern}\n`);
+          if (report.mentalHealthConcerns && report.mentalHealthConcerns.length > 0) {
+            analysisMessage += "**Key Mental Health Observations:**\n";
+            report.mentalHealthConcerns.slice(0, 3).forEach(concern => { // Show top 3 concerns
+                analysisMessage += `* ${concern.condition} (Severity: ${concern.severity}). ${concern.details.substring(0,100)}${concern.details.length > 100 ? '...' : ''}\n`;
+            });
+            analysisMessage += "\n";
+          } else {
+            analysisMessage += "It looks like there were no major concerns flagged in your intake, which is great! \n\n"
+          }
+
+          if (report.recommendations && report.recommendations.length > 0) {
+            analysisMessage += "**Some Initial Recommendations For You:**\n";
+            // Try to pick one of each type if available, or top few
+            const immediateRec = report.recommendations.find(r => r.type === "Immediate");
+            const lifestyleRec = report.recommendations.find(r => r.type === "Lifestyle");
+            const longtermRec = report.recommendations.find(r => r.type === "Long-term");
+            
+            let displayedRecs = 0;
+            if(immediateRec && displayedRecs < 2) { analysisMessage += `* **${immediateRec.type}:** ${immediateRec.action}\n`; displayedRecs++;}
+            if(lifestyleRec && displayedRecs < 2) { analysisMessage += `* **${lifestyleRec.type}:** ${lifestyleRec.action}\n`; displayedRecs++;}
+            if(longtermRec && displayedRecs < 2) { analysisMessage += `* **${longtermRec.type}:** ${longtermRec.action}\n`; displayedRecs++;}
+            
+            if(displayedRecs === 0) { // Fallback if specific types not found
+                 report.recommendations.slice(0, 2).forEach(rec => analysisMessage += `* **${rec.type}:** ${rec.action}\n`);
+            }
             analysisMessage += "\n";
           }
-          if (results.suggestedSupportNeeds && results.suggestedSupportNeeds.length > 0) {
-            analysisMessage += "**Helpful Support Areas:**\n";
-            results.suggestedSupportNeeds.forEach(need => analysisMessage += `* ${need}\n`);
-            analysisMessage += "\n";
+
+          if (report.moodTrend && report.moodTrend.summary && report.moodTrend.summary !== "No historical data available.") {
+              analysisMessage += `**Regarding Your Mood Trend:** ${report.moodTrend.summary}\n\n`;
           }
-          if (results.personalizedRecommendations && results.personalizedRecommendations.length > 0) {
-            analysisMessage += "**Personalized Recommendations to Get Started:**\n";
-            results.personalizedRecommendations.forEach(rec => analysisMessage += `* ${rec}\n`);
-            analysisMessage += "\n";
-          }
-          analysisMessage += "How do these initial thoughts resonate with you, or what's on your mind today?";
+          
+          analysisMessage += "This is just a starting point. How does this summary resonate with you, or what's specifically on your mind that you'd like to discuss today?";
           initialAiText = analysisMessage;
           newWelcomeMessageId = `ai-welcome-analyzed-${Date.now()}`; 
-          localStorage.removeItem(INTAKE_ANALYSIS_LS_KEY); 
+          localStorage.removeItem(INTAKE_ANALYSIS_LS_KEY); // Clear after displaying
         } catch (e) {
-          console.error("Error parsing intake analysis results for chat dialog", e);
+          console.error("Error parsing intake analysis (JSON report) for chat dialog", e);
+          initialAiText = "I had a bit of trouble processing the full details from your intake, but I'm here to help. How are you feeling today?";
         }
       }
 
@@ -215,7 +250,8 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
             ]);
       }
     }
-  }, [open, messages]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); // Removed messages from dependency array to prevent re-triggering on message send
 
 
   useEffect(() => {
@@ -239,7 +275,8 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
 
     try {
       let intakeDataForAIChat: Partial<AIChatbotAssistantInput> = {};
-      const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_LS_KEY);
+      const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_LS_KEY); // Use raw intake data for chat context
+      
       if (storedIntakeDataString) {
         const parsedIntakeData: StoredIntakeData = JSON.parse(storedIntakeDataString);
         
@@ -248,45 +285,52 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
             return value;
         };
 
+        const mapScaleToString = (value: number | undefined, scaleLabels: Record<number,string>): string | undefined => {
+            if (value === undefined || !(value in scaleLabels)) return undefined;
+            return scaleLabels[value];
+        }
+
+        // Populate context for AI Chatbot using StoredIntakeData (raw form values)
         intakeDataForAIChat = {
           name: parsedIntakeData.fullName,
           age: parsedIntakeData.age,
           gender: parsedIntakeData.gender,
-          location: parsedIntakeData.location,
+          location: parsedIntakeData.city && parsedIntakeData.timezone ? `${parsedIntakeData.city}, ${parsedIntakeData.timezone}` : undefined,
           diagnosisHistory: parsedIntakeData.diagnosisHistory,
           diagnoses: formatArrayToString(parsedIntakeData.diagnoses),
           currentTreatment: parsedIntakeData.currentTreatment,
-          sleepPatterns: parsedIntakeData.sleepPatterns,
-          exerciseFrequency: parsedIntakeData.exerciseFrequency,
-          substanceUse: parsedIntakeData.substanceUse,
-          currentStressLevel: parsedIntakeData.currentStressLevel,
-          todayMood: parsedIntakeData.todayMood,
+          sleepPatterns: parsedIntakeData.sleepPatterns_original,
+          exerciseFrequency: parsedIntakeData.exerciseFrequency_original,
+          substanceUse: parsedIntakeData.substanceUse_original,
+          currentStressLevel: parsedIntakeData.currentStressLevel_original,
+          todayMood: parsedIntakeData.todayMood_original_emoji,
           frequentEmotions: formatArrayToString(parsedIntakeData.frequentEmotions),
           supportAreas: formatArrayToString(parsedIntakeData.supportAreas),
           contentPreferences: formatArrayToString(parsedIntakeData.contentPreferences),
           additionalInformation: parsedIntakeData.additionalInformation,
 
-          // New fields
+          // New Q1-Q20 fields from StoredIntakeData
           sadnessFrequencyWeekly: parsedIntakeData.sadnessFrequencyWeekly,
           panicAttackFrequency: parsedIntakeData.panicAttackFrequency,
-          moodTodayDetailed: parsedIntakeData.moodTodayDetailed,
-          otherMoodToday: parsedIntakeData.otherMoodToday,
+          moodTodayDetailed: parsedIntakeData.moodTodayDetailed === 'Other' ? parsedIntakeData.otherMoodToday : parsedIntakeData.moodTodayDetailed,
+          otherMoodToday: parsedIntakeData.otherMoodToday, // Kept for completeness but moodTodayDetailed is combined
           hopelessPastTwoWeeks: parsedIntakeData.hopelessPastTwoWeeks,
           hopelessDescription: parsedIntakeData.hopelessDescription,
           currentWorryIntensity: parsedIntakeData.currentWorryIntensity,
           averageSleepHoursNightly: parsedIntakeData.averageSleepHoursNightly,
           appetiteChanges: parsedIntakeData.appetiteChanges,
-          socialAvoidanceFrequency: parsedIntakeData.socialAvoidanceFrequency,
+          // For scale-based values passed to chat, convert to string if original schema expects string
+          socialAvoidanceFrequency: mapScaleToString(parsedIntakeData.socialAvoidanceFrequency, SCALE_1_5_LABELS_FOR_CHAT) as AIChatbotAssistantInput['socialAvoidanceFrequency'],
           repetitiveBehaviors: parsedIntakeData.repetitiveBehaviors,
           repetitiveBehaviorsDescription: parsedIntakeData.repetitiveBehaviorsDescription,
           exerciseFrequencyDetailed: parsedIntakeData.exerciseFrequencyDetailed,
-          physicalSymptomsFrequency: parsedIntakeData.physicalSymptomsFrequency,
+          physicalSymptomsFrequency: mapScaleToString(parsedIntakeData.physicalSymptomsFrequency, SCALE_1_5_LABELS_FOR_CHAT) as AIChatbotAssistantInput['physicalSymptomsFrequency'],
           substanceUseCoping: parsedIntakeData.substanceUseCoping,
           workSchoolStressLevel: parsedIntakeData.workSchoolStressLevel,
-          concentrationDifficultyFrequency: parsedIntakeData.concentrationDifficultyFrequency,
+          concentrationDifficultyFrequency: mapScaleToString(parsedIntakeData.concentrationDifficultyFrequency, SCALE_1_5_LABELS_FOR_CHAT) as AIChatbotAssistantInput['concentrationDifficultyFrequency'],
           recurringNegativeThoughts: parsedIntakeData.recurringNegativeThoughts,
           negativeThoughtsDescription: parsedIntakeData.negativeThoughtsDescription,
-          overwhelmedByTasksFrequency: parsedIntakeData.overwhelmedByTasksFrequency,
+          overwhelmedByTasksFrequency: mapScaleToString(parsedIntakeData.overwhelmedByTasksFrequency, SCALE_1_5_LABELS_FOR_CHAT) as AIChatbotAssistantInput['overwhelmedByTasksFrequency'],
           hopefulnessFuture: parsedIntakeData.hopefulnessFuture,
           mentalHealthMedication: parsedIntakeData.mentalHealthMedication,
           medicationDetails: parsedIntakeData.medicationDetails,
@@ -368,7 +412,7 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
                   className={`flex flex-col mb-2 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[75%] p-3 rounded-lg shadow-sm ${
+                    className={`max-w-[85%] p-3 rounded-lg shadow-sm ${
                       msg.sender === 'user'
                         ? 'bg-primary text-primary-foreground rounded-br-none'
                         : 'bg-muted text-muted-foreground rounded-bl-none'
@@ -395,6 +439,12 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
           </ScrollArea>
 
           <DialogFooter className="p-4 pt-2 border-t flex-col space-y-2">
+             {messages.length <= 1 && (messages[0]?.id.startsWith('ai-welcome-analyzed')) && (
+                 <div className="p-2 mb-2 border border-blue-200 bg-blue-50 rounded-md text-xs text-blue-700 flex items-start gap-2">
+                    <Info className="h-4 w-4 flex-shrink-0 mt-0.5"/>
+                    <span>This is a summary from your intake form. Feel free to discuss any part of it, or tell me what's on your mind now.</span>
+                </div>
+            )}
             <form
               onSubmit={(e) => { e.preventDefault(); handleSubmitMessage(); }}
               className="flex w-full items-center space-x-2"
@@ -422,4 +472,3 @@ export function AIChatAssistantDialog({ open, onOpenChange }: AIChatAssistantDia
     </>
   );
 }
-

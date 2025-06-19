@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase'; 
 import { doc, getDoc } from "firebase/firestore"; 
+import type { InitialIntakeAnalyzerOutput } from '@/ai/flows/initial-intake-analyzer';
+
 
 interface MoodLogEntry {
   id: string;
@@ -38,20 +40,21 @@ interface ActivityItem {
   category: 'AI Chat' | 'Community' | 'Appointment' | 'Mood Log';
 }
 
+// This interface should align with StoredIntakeData in AIChatAssistantDialog
+// and IntakeFormValues in intake/page.tsx
 interface IntakeData {
-  // Existing fields
   fullName?: string;
   age?: number;
   gender?: string;
-  location?: string;
+  location?: string; // Combined city, timezone
   diagnosisHistory?: string;
-  diagnoses?: string[] | string; // Can be array or comma-separated string from AI context
+  diagnoses?: string[] | string; 
   currentTreatment?: string;
-  sleepPatterns?: number; // Existing sleep value (3-12 scale)
-  exerciseFrequency?: string;
-  substanceUse?: string;
-  currentStressLevel?: number; // Overall stress level
-  todayMood?: string; // Emoji
+  sleepPatterns_original?: number; 
+  exerciseFrequency_original?: string;
+  substanceUse_original?: string;
+  currentStressLevel_original?: number; 
+  todayMood_original_emoji?: string; 
   frequentEmotions?: string[] | string;
   supportAreas?: string[] | string;
   contentPreferences?: string[] | string;
@@ -60,7 +63,7 @@ interface IntakeData {
   additionalInformation?: string;
   updatedAt?: any; 
 
-  // New fields from expanded intake
+  // New Q1-Q20 fields
   sadnessFrequencyWeekly?: number;
   panicAttackFrequency?: string;
   moodTodayDetailed?: string;
@@ -68,7 +71,7 @@ interface IntakeData {
   hopelessPastTwoWeeks?: string;
   hopelessDescription?: string;
   currentWorryIntensity?: number;
-  averageSleepHoursNightly?: string; // e.g., '6-8 hours'
+  averageSleepHoursNightly?: string; 
   appetiteChanges?: string;
   socialAvoidanceFrequency?: number; // 1-5 scale
   repetitiveBehaviors?: string;
@@ -76,12 +79,12 @@ interface IntakeData {
   exerciseFrequencyDetailed?: string;
   physicalSymptomsFrequency?: number; // 1-5 scale
   substanceUseCoping?: string;
-  workSchoolStressLevel?: number; // 1-10 scale
+  workSchoolStressLevel?: number; 
   concentrationDifficultyFrequency?: number; // 1-5 scale
   recurringNegativeThoughts?: string;
   negativeThoughtsDescription?: string;
   overwhelmedByTasksFrequency?: number; // 1-5 scale
-  hopefulnessFuture?: number; // 1-10 scale
+  hopefulnessFuture?: number; 
   mentalHealthMedication?: string;
   medicationDetails?: string;
   socialSupportAvailability?: string;
@@ -92,14 +95,17 @@ interface IntakeData {
 
 const LAST_AI_CHAT_ACTIVITY_KEY = 'wellspringUserLastAiChatActivity';
 const MOOD_LOG_KEY = 'wellspringUserMoodLog';
-const INTAKE_DATA_KEY = 'wellspringUserIntakeData'; 
+const INTAKE_DATA_KEY = 'wellspringUserIntakeData'; // For raw form values
+const INTAKE_ANALYSIS_KEY = 'wellspringIntakeAnalysisResults'; // For the JSON report
 const USER_ID_PLACEHOLDER = "mockUserId"; 
 
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [intakeDataExists, setIntakeDataExists] = useState<boolean | null>(null);
-  const [userIntakeData, setUserIntakeData] = useState<IntakeData | null>(null);
+  const [userIntakeData, setUserIntakeData] = useState<IntakeData | null>(null); // Raw form data
+  const [intakeAnalysisReport, setIntakeAnalysisReport] = useState<InitialIntakeAnalyzerOutput | null>(null); // Structured JSON report
+  
   const [lastMood, setLastMood] = useState<string | null>(null); 
   const [lastMoodEntryForInsight, setLastMoodEntryForInsight] = useState<MoodLogEntry | null>(null); 
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
@@ -110,6 +116,8 @@ export default function DashboardPage() {
   const [isLoadingInsight, setIsLoadingInsight] = useState<boolean>(false);
   const [displayStressLevel, setDisplayStressLevel] = useState<string>("Loading...");
   const [displaySleepHours, setDisplaySleepHours] = useState<string>("Loading...");
+  const [displaySadnessLevel, setDisplaySadnessLevel] = useState<string>("Loading...");
+
 
   const { toast } = useToast();
   const router = useRouter();
@@ -123,24 +131,18 @@ export default function DashboardPage() {
     const premiumStatus = localStorage.getItem('wellspringUserIsPremium');
     setIsPremiumUser(premiumStatus === 'true');
 
-    const processIntakeData = (data: IntakeData | null) => {
+    const processIntakeDataAndReport = (data: IntakeData | null, report: InitialIntakeAnalyzerOutput | null) => {
         setUserIntakeData(data);
-        if (data) {
+        setIntakeAnalysisReport(report);
+
+        if (data) { // Use raw form data for initial display if report not yet fully processed/available for this logic
             setIntakeDataExists(true);
             
-            // Determine stress display: use workSchoolStressLevel if available, then currentWorryIntensity, then currentStressLevel
-            let stressToDisplay: number | undefined = undefined;
+            let stressToDisplay: number | undefined = data.workSchoolStressLevel ?? data.currentWorryIntensity ?? data.currentStressLevel_original;
             let stressSource: string = "";
-            if (typeof data.workSchoolStressLevel === 'number') {
-                stressToDisplay = data.workSchoolStressLevel;
-                stressSource = " (Work/School)";
-            } else if (typeof data.currentWorryIntensity === 'number') {
-                stressToDisplay = data.currentWorryIntensity;
-                stressSource = " (Worry Intensity)";
-            } else if (typeof data.currentStressLevel === 'number') {
-                stressToDisplay = data.currentStressLevel;
-                stressSource = " (Overall)";
-            }
+            if (typeof data.workSchoolStressLevel === 'number') stressSource = " (Work/School)";
+            else if (typeof data.currentWorryIntensity === 'number') stressSource = " (Worry)";
+            else if (typeof data.currentStressLevel_original === 'number') stressSource = " (Overall)";
 
             if (typeof stressToDisplay === 'number') {
                 if (stressToDisplay <= 3) setDisplayStressLevel(`Low (${stressToDisplay}/10)${stressSource}`);
@@ -149,25 +151,36 @@ export default function DashboardPage() {
             } else {
                 setDisplayStressLevel("Not logged in intake");
             }
+            
+            if (data.averageSleepHoursNightly) setDisplaySleepHours(`${data.averageSleepHoursNightly}`);
+            else if (typeof data.sleepPatterns_original === 'number') setDisplaySleepHours(`${data.sleepPatterns_original} hours (avg)`);
+            else setDisplaySleepHours("Not logged in intake");
 
-            // Determine sleep display: use averageSleepHoursNightly if available, then sleepPatterns
-            if (data.averageSleepHoursNightly) {
-                setDisplaySleepHours(`${data.averageSleepHoursNightly}`);
-            } else if (typeof data.sleepPatterns === 'number') {
-                setDisplaySleepHours(`${data.sleepPatterns} hours (avg)`);
-            } else {
-                setDisplaySleepHours("Not logged in intake");
-            }
-            return data; 
+            if(typeof data.sadnessFrequencyWeekly === 'number') setDisplaySadnessLevel(`${data.sadnessFrequencyWeekly}/10`);
+            else setDisplaySadnessLevel("Not logged");
+
         } else {
             setIntakeDataExists(false);
             setDisplayStressLevel("Complete intake form");
             setDisplaySleepHours("Complete intake form");
-            return null;
+            setDisplaySadnessLevel("Complete intake form");
         }
+
+        // If report is available, potentially override/enhance display with analytics scores
+        if (report?.analytics) {
+            if(report.analytics.stressScore) {
+                const score = report.analytics.stressScore;
+                if (score <= 3) setDisplayStressLevel(`Low (${score}/10) (Analyzed)`);
+                else if (score <= 7) setDisplayStressLevel(`Moderate (${score}/10) (Analyzed)`);
+                else setDisplayStressLevel(`High (${score}/10) (Analyzed)`);
+            }
+            if(report.analytics.sleepQuality) setDisplaySleepHours(report.analytics.sleepQuality + " (Analyzed)");
+            if(report.analytics.sadnessScore) setDisplaySadnessLevel(`${report.analytics.sadnessScore}/10 (Analyzed)`);
+        }
+        return data; 
     };
     
-    const fetchInsight = async (currentIntakeData: IntakeData | null, currentLastMoodEntry: MoodLogEntry | null) => {
+    const fetchInsightForDashboard = async (currentIntakeData: IntakeData | null, currentLastMoodEntry: MoodLogEntry | null) => {
       if (!currentIntakeData) {
         setPersonalizedInsight(null); 
         setIsLoadingInsight(false);
@@ -175,6 +188,7 @@ export default function DashboardPage() {
       }
       setIsLoadingInsight(true);
       try {
+        // Prepare summary for insight generator using available intake fields
         let summaryParts = [];
         if (currentIntakeData.fullName) summaryParts.push(`Name: ${currentIntakeData.fullName}`);
         if (currentIntakeData.age) summaryParts.push(`Age: ${currentIntakeData.age}`);
@@ -182,74 +196,64 @@ export default function DashboardPage() {
              const support = Array.isArray(currentIntakeData.supportAreas) ? currentIntakeData.supportAreas.join(', ') : currentIntakeData.supportAreas;
              summaryParts.push(`Seeks support in: ${support}`);
         }
-        if (currentIntakeData.frequentEmotions && currentIntakeData.frequentEmotions.length > 0) {
-            const emotions = Array.isArray(currentIntakeData.frequentEmotions) ? currentIntakeData.frequentEmotions.join(', ') : currentIntakeData.frequentEmotions;
-            summaryParts.push(`Often feels: ${emotions}`);
-        }
-        if (currentIntakeData.todayMood) summaryParts.push(`Reported mood on intake (quick): ${currentIntakeData.todayMood}`);
         if (currentIntakeData.moodTodayDetailed) summaryParts.push(`Reported detailed mood on intake: ${currentIntakeData.moodTodayDetailed}`);
+        else if (currentIntakeData.todayMood_original_emoji) summaryParts.push(`Reported quick mood on intake: ${currentIntakeData.todayMood_original_emoji}`);
         
         const insightInput: InsightGeneratorInput = {
           intakeSummary: summaryParts.length > 0 ? summaryParts.join('. ') : "User has provided some intake information.",
-          lastMood: currentLastMoodEntry?.mood || currentIntakeData.moodTodayDetailed || currentIntakeData.todayMood,
-          currentStressLevel: currentIntakeData.workSchoolStressLevel ?? currentIntakeData.currentWorryIntensity ?? currentIntakeData.currentStressLevel,
+          lastMood: currentLastMoodEntry?.mood || currentIntakeData.moodTodayDetailed || currentIntakeData.todayMood_original_emoji,
+          currentStressLevel: currentIntakeData.workSchoolStressLevel ?? currentIntakeData.currentWorryIntensity ?? currentIntakeData.currentStressLevel_original,
         };
         const result = await generateInsights(insightInput);
         setPersonalizedInsight(result.insightText);
       } catch (error) {
-        console.error("Failed to generate insight:", error);
+        console.error("Failed to generate insight for dashboard:", error);
         setPersonalizedInsight("Could not load a personalized tip. Please try again later.");
-        toast({
-          title: "Insight Error",
-          description: "Failed to generate a personalized insight.",
-          variant: "destructive",
-        });
+        // Toast for insight error is optional here as it's a non-critical dashboard element
       } finally {
         setIsLoadingInsight(false);
       }
     };
 
-    const loadIntakeAndInsights = async () => {
+    const loadDashboardData = async () => {
       let loadedIntakeData: IntakeData | null = null;
+      let loadedAnalysisReport: InitialIntakeAnalyzerOutput | null = null;
       
+      // Try loading raw intake data (e.g. from Firestore or LS)
       if (db) { 
         try {
           const docRef = doc(db, "intakeForms", USER_ID_PLACEHOLDER);
           const docSnap = await getDoc(docRef);
-
           if (docSnap.exists()) {
-            console.log("MINDSTRIDE: Intake data loaded from Firestore");
             loadedIntakeData = docSnap.data() as IntakeData;
-          } else {
-            console.log("MINDSTRIDE: No intake data in Firestore, trying localStorage.");
           }
         } catch (error: any) {
           if (error.code === 'unavailable' || error.message?.toLowerCase().includes('offline')) {
-            console.warn("MINDSTRIDE: Firestore is unavailable (client offline). Will rely on localStorage.", error.message);
+            console.warn("MINDSTRIDE: Firestore is unavailable for intake data. Relying on localStorage.", error.message);
           } else {
             console.error("MINDSTRIDE: Error loading intake data from Firestore:", error);
           }
         }
-      } else {
-         console.warn("MINDSTRIDE: Firestore not configured. Skipping Firestore read for intake data.");
       }
 
       if (!loadedIntakeData) {
         const storedIntakeDataString = localStorage.getItem(INTAKE_DATA_KEY);
         if (storedIntakeDataString) {
-          try {
-            loadedIntakeData = JSON.parse(storedIntakeDataString);
-            console.log("MINDSTRIDE: Intake data loaded from localStorage");
-          } catch (e) {
-            console.error("MINDSTRIDE: Error parsing intake data from localStorage", e);
-          }
-        } else {
-           console.log("MINDSTRIDE: No intake data in localStorage either.");
+          try { loadedIntakeData = JSON.parse(storedIntakeDataString); } 
+          catch (e) { console.error("MINDSTRIDE: Error parsing raw intake data from localStorage", e); }
         }
       }
       
-      const processedDataForInsight = processIntakeData(loadedIntakeData);
+      // Try loading the analyzed JSON report from LS
+      const analysisReportString = localStorage.getItem(INTAKE_ANALYSIS_KEY);
+      if (analysisReportString) {
+          try { loadedAnalysisReport = JSON.parse(analysisReportString); }
+          catch (e) { console.error("MINDSTRIDE: Error parsing analysis report from localStorage", e); }
+      }
+      
+      processIntakeDataAndReport(loadedIntakeData, loadedAnalysisReport);
 
+      // Mood Log for dashboard display and insight generation
       const moodLogString = localStorage.getItem(MOOD_LOG_KEY);
       let currentLastMoodEmoji: string | null = null;
       let currentLastMoodEntryForInsightState: MoodLogEntry | null = null;
@@ -260,24 +264,23 @@ export default function DashboardPage() {
           if (moodLog.length > 0) {
             const sortedMoodLog = moodLog.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             currentLastMoodEntryForInsightState = sortedMoodLog[0];
-            currentLastMoodEmoji = currentLastMoodEntryForInsightState.mood; // This is the emoji from mood check-in
+            currentLastMoodEmoji = currentLastMoodEntryForInsightState.mood; 
           }
         } catch (e) { console.error("Error parsing mood log", e); }
       }
-      // Prioritize mood from check-in, then detailed intake mood, then quick intake mood
-      setLastMood(currentLastMoodEmoji || loadedIntakeData?.moodTodayDetailed || loadedIntakeData?.todayMood || null);
+      setLastMood(currentLastMoodEmoji || loadedIntakeData?.moodTodayDetailed || loadedIntakeData?.todayMood_original_emoji || null);
       setLastMoodEntryForInsight(currentLastMoodEntryForInsightState);
 
-      fetchInsight(processedDataForInsight, currentLastMoodEntryForInsightState);
+      fetchInsightForDashboard(loadedIntakeData, currentLastMoodEntryForInsightState);
 
+      // Recent Activities
       const activities: ActivityItem[] = [];
       const lastAiChatString = localStorage.getItem(LAST_AI_CHAT_ACTIVITY_KEY);
       if (lastAiChatString) {
         try {
           const lastAiChat: AiChatActivity = JSON.parse(lastAiChatString);
           activities.push({
-            id: 'ai-chat-latest',
-            icon: MessageSquare,
+            id: 'ai-chat-latest', icon: MessageSquare,
             text: `AI: "${lastAiChat.text.substring(0, 45)}${lastAiChat.text.length > 45 ? '...' : ''}"`,
             timestamp: lastAiChat.timestamp,
             relativeTime: formatDistanceToNow(parseISO(lastAiChat.timestamp), { addSuffix: true }),
@@ -288,8 +291,7 @@ export default function DashboardPage() {
 
       if (currentLastMoodEntryForInsightState) {
           activities.push({
-          id: `mood-log-${currentLastMoodEntryForInsightState.id}`,
-          icon: Smile,
+          id: `mood-log-${currentLastMoodEntryForInsightState.id}`, icon: Smile,
           text: `Logged mood: ${currentLastMoodEntryForInsightState.mood}${currentLastMoodEntryForInsightState.notes ? ` - "${currentLastMoodEntryForInsightState.notes.substring(0, 30)}${currentLastMoodEntryForInsightState.notes.length > 30 ? '...' : ''}"` : ''}`,
           timestamp: currentLastMoodEntryForInsightState.timestamp,
           relativeTime: formatDistanceToNow(parseISO(currentLastMoodEntryForInsightState.timestamp), { addSuffix: true }),
@@ -298,16 +300,14 @@ export default function DashboardPage() {
       }
       
       activities.push({
-        id: 'community-placeholder-1',
-        icon: Users,
+        id: 'community-placeholder-1', icon: Users,
         text: "Feature: Posted in 'Anxiety Support' forum.",
         timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         relativeTime: formatDistanceToNow(new Date(Date.now() - 2 * 60 * 60 * 1000), { addSuffix: true }),
         category: 'Community'
       });
       activities.push({
-        id: 'appointment-placeholder-1',
-        icon: CalendarDays,
+        id: 'appointment-placeholder-1', icon: CalendarDays,
         text: "Feature: Upcoming consultation with Dr. F.",
         timestamp: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         relativeTime: formatDistanceToNow(new Date(Date.now() + 24 * 60 * 60 * 1000), { addSuffix: true }),
@@ -318,10 +318,10 @@ export default function DashboardPage() {
       setRecentActivities(activities.slice(0, 4));
     };
 
-    loadIntakeAndInsights();
+    loadDashboardData();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAIChatDialogOpen, toast]); 
+  }, [isAIChatDialogOpen]); // Reload dashboard relevant data if AI chat closes (e.g. it might have updated LS)
 
 
   return (
@@ -394,12 +394,13 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center gap-2"><Smile className="h-6 w-6 text-primary" />Today's Wellness</CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <p className="text-muted-foreground mb-3">How are you feeling right now?</p>
-            <div className="flex items-center gap-2 mb-4">
+            <p className="text-muted-foreground mb-1">Quick overview:</p>
+            <div className="flex items-center gap-2 mb-3">
                  <span className="text-2xl p-2 bg-muted rounded-md" title={`Last mood: ${lastMood || 'Not logged'}`}>{lastMood ? (lastMood.length > 2 ? lastMood.substring(0,2) : lastMood) : '🤔'}</span>
                  <span className="text-sm text-muted-foreground">{lastMood ? `Last mood: ${lastMood}` : 'Log your mood!'}</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
+                <p className="text-sm">Sadness: <span className="font-semibold text-primary">{displaySadnessLevel}</span></p>
                 <p className="text-sm">Stress: <span className="font-semibold text-primary">{displayStressLevel}</span></p>
                 <p className="text-sm">Sleep: <span className="font-semibold text-primary">{displaySleepHours}</span></p>
             </div>
@@ -523,4 +524,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

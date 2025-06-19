@@ -15,63 +15,68 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 // Re-using some enums might be good if they are stable, or define them here if they can diverge
-const YES_NO_OPTIONS = ['Yes', 'No'] as const;
-const PANIC_ANXIETY_FREQUENCY_OPTIONS = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'] as const;
-const DETAILED_MOOD_OPTIONS = ['Happy', 'Sad', 'Anxious', 'Overwhelmed', 'Numb', 'Other'] as const;
-const AVG_SLEEP_HOURS_OPTIONS = ['Less than 4', '4-6', '6-8', 'More than 8'] as const;
-const APPETITE_CHANGE_OPTIONS = ['Increased', 'Decreased', 'No Change'] as const;
-const EXERCISE_FREQUENCY_DETAILED_OPTIONS = ['Daily', '2-3/week', 'Rarely', 'Never'] as const;
-const SUBSTANCE_COPING_OPTIONS = ['Never', 'Occasionally', 'Frequently'] as const;
-const SOCIAL_SUPPORT_OPTIONS = ['Yes', 'No', 'Sometimes'] as const;
+const YES_NO_OPTIONS_CHAT = ['Yes', 'No'] as const;
+const PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'] as const;
+const DETAILED_MOOD_OPTIONS_CHAT = ['Happy', 'Sad', 'Anxious', 'Overwhelmed', 'Numb', 'Other'] as const;
+const AVG_SLEEP_HOURS_OPTIONS_CHAT = ['Less than 4', '4-6', '6-8', 'More than 8'] as const;
+const APPETITE_CHANGE_OPTIONS_CHAT = ['Increased', 'Decreased', 'No Change'] as const;
+const EXERCISE_FREQUENCY_DETAILED_OPTIONS_CHAT = ['Daily', '2-3/week', 'Rarely', 'Never'] as const;
+const SUBSTANCE_COPING_OPTIONS_CHAT = ['Never', 'Occasionally', 'Frequently'] as const;
+const SOCIAL_SUPPORT_OPTIONS_CHAT = ['Yes', 'No', 'Sometimes'] as const;
+const ORIGINAL_EXERCISE_FREQ_OPTIONS_CHAT = ['None', '1-2 times per week', '3-4 times per week', '5-6 times per week', 'Daily'] as const;
+const ORIGINAL_SUBSTANCE_USE_OPTIONS_CHAT = ['Yes often', 'Occasionally', 'No'] as const;
 
 
 const AIChatbotAssistantInputSchema = z.object({
   message: z.string().describe('The user message to the chatbot.'),
-  // Existing profile fields
-  name: z.string().optional().describe('The user name.'),
-  age: z.number().optional().describe('The user age.'),
-  gender: z.string().optional().describe('The user gender.'),
-  location: z.string().optional().describe('The user location.'),
-  diagnosisHistory: z.string().optional().describe('The user diagnosis history.'),
-  diagnoses: z.string().optional().describe('The user\'s diagnosed conditions, if any (comma-separated).'),
-  currentTreatment: z.string().optional().describe('The user current treatment.'),
-  sleepPatterns: z.number().optional().describe('The user sleep patterns (hours per night - original measure).'),
-  exerciseFrequency: z.string().optional().describe('The user exercise frequency (original measure).'),
-  substanceUse: z.string().optional().describe('The user substance use (original measure).'),
-  currentStressLevel: z.number().optional().describe('The user current stress level (1-10 scale).'),
-  todayMood: z.string().optional().describe('The user current mood (emoji or word - quick check).'),
-  frequentEmotions: z.string().optional().describe('The user frequent emotions (comma-separated).'),
-  supportAreas: z.string().optional().describe('The user preferred support areas (comma-separated).'),
-  contentPreferences: z.string().optional().describe('The user content preferences (comma-separated).'),
+  // Fields from StoredIntakeData (localStorage version of form values)
+  name: z.string().optional().describe('The user name (from intake).'), // Corresponds to fullName
+  age: z.number().optional().describe('The user age (from intake).'),
+  gender: z.string().optional().describe('The user gender (from intake).'),
+  location: z.string().optional().describe('The user location (city, timezone from intake).'),
+  diagnosisHistory: z.string().optional().describe('User\'s stated history of mental health diagnoses (from intake).'),
+  diagnoses: z.string().optional().describe('User\'s diagnosed conditions, if any (comma-separated from intake).'),
+  currentTreatment: z.string().optional().describe('Whether the user is currently in treatment (from intake).'),
   
-  // New fields from expanded intake form (all optional for chat context)
-  sadnessFrequencyWeekly: z.number().optional().describe('Frequency of feeling sad/low in the past week (1-10).'),
-  panicAttackFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS).optional().describe('Frequency of sudden panic or anxiety feelings.'),
-  moodTodayDetailed: z.enum(DETAILED_MOOD_OPTIONS).optional().describe('Detailed description of mood today.'),
-  otherMoodToday: z.string().optional().describe('Specification if "Other" mood was selected.'),
-  hopelessPastTwoWeeks: z.enum(YES_NO_OPTIONS).optional().describe('Whether the user felt hopeless or unmotivated in the past two weeks.'),
-  hopelessDescription: z.string().optional().describe('Description if user felt hopeless.'),
-  currentWorryIntensity: z.number().optional().describe('Intensity of current worry or stress (1-10).'),
-  averageSleepHoursNightly: z.enum(AVG_SLEEP_HOURS_OPTIONS).optional().describe('Average hours of sleep per night (detailed measure).'),
-  appetiteChanges: z.enum(APPETITE_CHANGE_OPTIONS).optional().describe('Recent changes in appetite or eating habits.'),
-  socialAvoidanceFrequency: z.number().optional().describe('Frequency of avoiding social interactions (1:Never-5:Always).'),
-  repetitiveBehaviors: z.enum(YES_NO_OPTIONS).optional().describe('Whether the user engages in repetitive behaviors.'),
-  repetitiveBehaviorsDescription: z.string().optional().describe('Description of repetitive behaviors if any.'),
-  exerciseFrequencyDetailed: z.enum(EXERCISE_FREQUENCY_DETAILED_OPTIONS).optional().describe('Frequency of exercise or physical activity (detailed measure).'),
-  physicalSymptomsFrequency: z.number().optional().describe('Frequency of physical symptoms like headaches or fatigue (1:Never-5:Always).'),
-  substanceUseCoping: z.enum(SUBSTANCE_COPING_OPTIONS).optional().describe('Frequency of using substances to cope with stress.'),
-  workSchoolStressLevel: z.number().optional().describe('Stress level at work/school (1-10).'),
-  concentrationDifficultyFrequency: z.number().optional().describe('Frequency of difficulty concentrating or making decisions (1:Never-5:Always).'),
-  recurringNegativeThoughts: z.enum(YES_NO_OPTIONS).optional().describe('Whether the user has recurring negative thoughts or worries.'),
-  negativeThoughtsDescription: z.string().optional().describe('Description of recurring negative thoughts if any.'),
-  overwhelmedByTasksFrequency: z.number().optional().describe('Frequency of feeling overwhelmed by daily tasks (1:Never-5:Always).'),
-  hopefulnessFuture: z.number().optional().describe('Level of hopefulness about the future (1-10).'),
-  mentalHealthMedication: z.enum(YES_NO_OPTIONS).optional().describe('Whether the user currently takes mental health medication.'),
-  medicationDetails: z.string().optional().describe('Details about mental health medication if taken.'),
-  socialSupportAvailability: z.enum(SOCIAL_SUPPORT_OPTIONS).optional().describe('Availability of someone to talk to about feelings.'),
-  recentLifeChanges: z.enum(YES_NO_OPTIONS).optional().describe('Whether the user experienced major life changes recently.'),
-  lifeChangesDescription: z.string().optional().describe('Brief description of recent major life changes.'),
-  additionalInformation: z.string().optional().describe('Any additional information shared by the user in their intake.'),
+  // Original specific fields if they are distinct or provide different nuance
+  sleepPatterns: z.number().optional().describe('User\'s originally reported sleep patterns (hours per night, 3-12 scale from intake).'), // Corresponds to sleepPatterns_original
+  exerciseFrequency: z.string().optional().describe('User\'s originally reported exercise frequency (e.g., 1-2 times/week from intake).'), // Corresponds to exerciseFrequency_original
+  substanceUse: z.string().optional().describe('User\'s originally reported general substance use habits (from intake).'), // Corresponds to substanceUse_original
+  currentStressLevel: z.number().optional().describe('User\'s originally reported overall stress level (1-10 scale from intake).'), // Corresponds to currentStressLevel_original
+  todayMood: z.string().optional().describe('User\'s originally reported quick mood check (emoji from intake).'), // Corresponds to todayMood_original_emoji
+
+  frequentEmotions: z.string().optional().describe('User\'s frequently experienced emotions (comma-separated from intake).'),
+  supportAreas: z.string().optional().describe('Areas where the user seeks support (comma-separated from intake).'),
+  contentPreferences: z.string().optional().describe('User\'s preferred content types (comma-separated from intake).'),
+  additionalInformation: z.string().optional().describe('Any additional information shared by the user in their intake form.'),
+  
+  // Mapped Q1-Q20 fields (more detailed from intake form)
+  sadnessFrequencyWeekly: z.number().optional().describe('Frequency of feeling sad/low in the past week (1-10 from intake q1).'),
+  panicAttackFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT).optional().describe('Frequency of sudden panic or anxiety feelings (from intake q2).'),
+  moodTodayDetailed: z.string().optional().describe('Detailed description of mood today (e.g. Happy, Sad, or specified Other from intake q3).'),
+  // otherMoodToday: z.string().optional().describe('Specification if "Other" mood was selected (from intake q3 - combined into moodTodayDetailed for chat).'),
+  hopelessPastTwoWeeks: z.enum(YES_NO_OPTIONS_CHAT).optional().describe('Whether the user felt hopeless or unmotivated in the past two weeks (from intake q4).'),
+  hopelessDescription: z.string().optional().describe('Description if user felt hopeless (from intake q4).'),
+  currentWorryIntensity: z.number().optional().describe('Intensity of current worry or stress (1-10 from intake q5).'),
+  averageSleepHoursNightly: z.enum(AVG_SLEEP_HOURS_OPTIONS_CHAT).optional().describe('Average hours of sleep per night (detailed measure from intake q6).'),
+  appetiteChanges: z.enum(APPETITE_CHANGE_OPTIONS_CHAT).optional().describe('Recent changes in appetite or eating habits (from intake q7).'),
+  socialAvoidanceFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT).optional().describe('Frequency of avoiding social interactions (mapped from 1-5 scale to enum for intake q8).'),
+  repetitiveBehaviors: z.enum(YES_NO_OPTIONS_CHAT).optional().describe('Whether the user engages in repetitive behaviors (from intake q9).'),
+  repetitiveBehaviorsDescription: z.string().optional().describe('Description of repetitive behaviors if any (from intake q9).'),
+  exerciseFrequencyDetailed: z.enum(EXERCISE_FREQUENCY_DETAILED_OPTIONS_CHAT).optional().describe('Frequency of exercise or physical activity (detailed measure from intake q10).'),
+  physicalSymptomsFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT).optional().describe('Frequency of physical symptoms like headaches or fatigue (mapped from 1-5 scale to enum for intake q11).'),
+  substanceUseCoping: z.enum(SUBSTANCE_COPING_OPTIONS_CHAT).optional().describe('Frequency of using substances to cope with stress (from intake q12).'),
+  workSchoolStressLevel: z.number().optional().describe('Stress level at work/school (1-10 from intake q13).'),
+  concentrationDifficultyFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT).optional().describe('Frequency of difficulty concentrating or making decisions (mapped from 1-5 scale to enum for intake q14).'),
+  recurringNegativeThoughts: z.enum(YES_NO_OPTIONS_CHAT).optional().describe('Whether the user has recurring negative thoughts or worries (from intake q15).'),
+  negativeThoughtsDescription: z.string().optional().describe('Description of recurring negative thoughts if any (from intake q15).'),
+  overwhelmedByTasksFrequency: z.enum(PANIC_ANXIETY_FREQUENCY_OPTIONS_CHAT).optional().describe('Frequency of feeling overwhelmed by daily tasks (mapped from 1-5 scale to enum for intake q16).'),
+  hopefulnessFuture: z.number().optional().describe('Level of hopefulness about the future (1-10 from intake q17).'),
+  mentalHealthMedication: z.enum(YES_NO_OPTIONS_CHAT).optional().describe('Whether the user currently takes mental health medication (from intake q18).'),
+  medicationDetails: z.string().optional().describe('Details about mental health medication if taken (from intake q18).'),
+  socialSupportAvailability: z.enum(SOCIAL_SUPPORT_OPTIONS_CHAT).optional().describe('Availability of someone to talk to about feelings (from intake q19).'),
+  recentLifeChanges: z.enum(YES_NO_OPTIONS_CHAT).optional().describe('Whether the user experienced major life changes recently (from intake q20).'),
+  lifeChangesDescription: z.string().optional().describe('Brief description of recent major life changes (from intake q20).'),
 });
 
 export type AIChatbotAssistantInput = z.infer<typeof AIChatbotAssistantInputSchema>;
@@ -92,7 +97,7 @@ const prompt = ai.definePrompt({
   output: {schema: AIChatbotAssistantOutputSchema},
   prompt: `You are a compassionate and intelligent AI mental health assistant. Your job is to deeply understand the user's emotional and cognitive state, identify their root concerns, and provide insightful, research-backed support. You must analyze input data (emotions + thoughts), detect patterns, and draw upon your knowledge of psychological principles and common research findings to guide the user.
 
-Here is some information about the user, if available. Use this to personalize your response:
+Here is some information about the user, if available from their intake form. Use this to personalize your response:
 **Basic Information:**
 {{#if name}}Name: {{{name}}}{{/if}}
 {{#if age}}Age: {{{age}}}{{/if}}
@@ -103,51 +108,50 @@ Here is some information about the user, if available. Use this to personalize y
 {{#if diagnosisHistory}}Diagnosis History: {{{diagnosisHistory}}}
   {{#if diagnoses}} Diagnosed Conditions: {{{diagnoses}}}{{/if}}
 {{/if}}
-{{#if currentTreatment}}Current Treatment: {{{currentTreatment}}}{{/if}}
+{{#if currentTreatment}}Currently in Treatment: {{{currentTreatment}}}{{/if}}
 {{#if mentalHealthMedication}}Taking Mental Health Medication: {{{mentalHealthMedication}}}
-  {{#if medicationDetails}} Details: {{{medicationDetails}}}{{/if}}
+  {{#if medicationDetails}} Medication Details: {{{medicationDetails}}}{{/if}}
 {{/if}}
 
-**Recent Emotional State & Patterns (from intake, if available):**
+**Recent Emotional State & Patterns (from detailed intake, if available):**
 {{#if sadnessFrequencyWeekly}}Sadness Frequency (past week, 1-10): {{{sadnessFrequencyWeekly}}}{{/if}}
 {{#if panicAttackFrequency}}Panic/Anxiety Attack Frequency: {{{panicAttackFrequency}}}{{/if}}
-{{#if moodTodayDetailed}}Mood Today (Detailed from intake): {{{moodTodayDetailed}}}
-  {{#if otherMoodToday}} (Specified: {{{otherMoodToday}}}){{/if}}
-{{/if}}
+{{#if moodTodayDetailed}}Mood Today (Detailed from intake): {{{moodTodayDetailed}}}{{/if}}
 {{#if hopelessPastTwoWeeks}}Felt Hopeless (past 2 weeks): {{{hopelessPastTwoWeeks}}}
   {{#if hopelessDescription}} (Description: {{{hopelessDescription}}}){{/if}}
 {{/if}}
 {{#if currentWorryIntensity}}Current Worry/Stress Intensity (1-10): {{{currentWorryIntensity}}}{{/if}}
-{{#if frequentEmotions}}Frequent Emotions (from intake): {{{frequentEmotions}}}{{/if}}
-{{#if todayMood}}Today's Mood (quick check from intake): {{{todayMood}}}{{/if}}
+{{#if workSchoolStressLevel}}Work/School Stress Level (1-10 from intake): {{{workSchoolStressLevel}}}{{/if}}
+{{#if currentStressLevel}}Overall Original Stress Level (1-10 from intake): {{{currentStressLevel}}}{{/if}} 
+{{#if todayMood}}Original Quick Mood (emoji from intake): {{{todayMood}}}{{/if}}
+{{#if frequentEmotions}}Frequently Felt Emotions (from intake): {{{frequentEmotions}}}{{/if}}
 
-**Behavioral Patterns (from intake):**
-{{#if sleepPatterns}}Sleep (original measure): {{{sleepPatterns}}} hours/night{{/if}}
-{{#if averageSleepHoursNightly}}Sleep (detailed measure): {{{averageSleepHoursNightly}}} per night{{/if}}
+
+**Behavioral Patterns (from detailed intake):**
+{{#if averageSleepHoursNightly}}Average Sleep (detailed measure): {{{averageSleepHoursNightly}}} per night{{/if}}
+{{#if sleepPatterns}}Original Sleep (hours scale): {{{sleepPatterns}}} hours/night{{/if}}
 {{#if appetiteChanges}}Appetite Changes: {{{appetiteChanges}}}{{/if}}
-{{#if socialAvoidanceFrequency}}Social Avoidance Frequency (1:Never-5:Always): {{{socialAvoidanceFrequency}}}{{/if}}
+{{#if socialAvoidanceFrequency}}Social Avoidance Frequency: {{{socialAvoidanceFrequency}}}{{/if}}
 {{#if repetitiveBehaviors}}Engaging in Repetitive Behaviors: {{{repetitiveBehaviors}}}
   {{#if repetitiveBehaviorsDescription}} (Description: {{{repetitiveBehaviorsDescription}}}){{/if}}
 {{/if}}
 
-**Physical & Lifestyle (from intake):**
-{{#if exerciseFrequency}}Exercise (original measure): {{{exerciseFrequency}}}{{/if}}
+**Physical & Lifestyle (from detailed intake):**
 {{#if exerciseFrequencyDetailed}}Exercise (detailed measure): {{{exerciseFrequencyDetailed}}}{{/if}}
-{{#if physicalSymptomsFrequency}}Physical Symptoms Frequency (1:Never-5:Always): {{{physicalSymptomsFrequency}}}{{/if}}
-{{#if substanceUse}}Substance Use (general habits): {{{substanceUse}}}{{/if}}
+{{#if exerciseFrequency}}Original Exercise (weekly): {{{exerciseFrequency}}}{{/if}}
+{{#if physicalSymptomsFrequency}}Physical Symptoms Frequency: {{{physicalSymptomsFrequency}}}{{/if}}
 {{#if substanceUseCoping}}Substance Use for Coping: {{{substanceUseCoping}}}{{/if}}
-{{#if currentStressLevel}}Overall Stress Level (1-10 from intake): {{{currentStressLevel}}}/10{{/if}}
-{{#if workSchoolStressLevel}}Work/School Stress Level (1-10 from intake): {{{workSchoolStressLevel}}}/10{{/if}}
+{{#if substanceUse}}Original Substance Use (general habits): {{{substanceUse}}}{{/if}}
 
-**Cognitive Patterns (from intake):**
-{{#if concentrationDifficultyFrequency}}Difficulty Concentrating/Making Decisions (1:Never-5:Always): {{{concentrationDifficultyFrequency}}}{{/if}}
+**Cognitive Patterns (from detailed intake):**
+{{#if concentrationDifficultyFrequency}}Difficulty Concentrating/Making Decisions: {{{concentrationDifficultyFrequency}}}{{/if}}
 {{#if recurringNegativeThoughts}}Recurring Negative Thoughts: {{{recurringNegativeThoughts}}}
   {{#if negativeThoughtsDescription}} (Description: {{{negativeThoughtsDescription}}}){{/if}}
 {{/if}}
-{{#if overwhelmedByTasksFrequency}}Overwhelmed by Daily Tasks (1:Never-5:Always): {{{overwhelmedByTasksFrequency}}}{{/if}}
+{{#if overwhelmedByTasksFrequency}}Overwhelmed by Daily Tasks: {{{overwhelmedByTasksFrequency}}}{{/if}}
 {{#if hopefulnessFuture}}Hopefulness about Future (1-10 from intake): {{{hopefulnessFuture}}}/10{{/if}}
 
-**Support System & History (from intake):**
+**Support System & History (from detailed intake):**
 {{#if socialSupportAvailability}}Social Support Availability: {{{socialSupportAvailability}}}{{/if}}
 {{#if recentLifeChanges}}Recent Major Life Changes: {{{recentLifeChanges}}}
   {{#if lifeChangesDescription}} (Description: {{{lifeChangesDescription}}}){{/if}}
@@ -187,8 +191,9 @@ const aiChatbotAssistantFlow = ai.defineFlow(
     inputSchema: AIChatbotAssistantInputSchema,
     outputSchema: AIChatbotAssistantOutputSchema,
   },
-  async input => {
-    // Ensure array-like fields from intake data are passed as comma-separated strings if they exist
+  async (input) => {
+    // Process input if necessary (e.g., ensure array-like fields are strings)
+    // This logic might need adjustment depending on how StoredIntakeData is structured when read from LS in AIChatAssistantDialog
     const processedInput = {
       ...input,
       diagnoses: Array.isArray(input.diagnoses) ? input.diagnoses.join(', ') : input.diagnoses,
@@ -200,4 +205,3 @@ const aiChatbotAssistantFlow = ai.defineFlow(
     return output!;
   }
 );
-
