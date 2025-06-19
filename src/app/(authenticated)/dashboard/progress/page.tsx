@@ -7,79 +7,68 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { format, parseISO, subDays, subWeeks, subMonths, startOfWeek, startOfMonth, formatISO } from 'date-fns';
-import { ArrowLeft, BarChart3, CalendarClock, Activity, ShieldCheck, Download, Share2, UserCheck, TrendingUp, ListChecks, Target, Repeat, AlertTriangle, Loader2, Info, LineChart, BarChart } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ArrowLeft, BarChart3, CalendarClock, Activity, ShieldCheck, Download, Share2, UserCheck, TrendingUp, ListChecks, Target, Repeat, AlertTriangle, Loader2, Info, LineChart, BarChart as BarChartIcon } from 'lucide-react'; // Renamed BarChart to BarChartIcon
 import { ResponsiveContainer, LineChart as ReLineChart, Line, BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { generateProgressReport, type ProgressReportGeneratorInput, type ProgressReportGeneratorOutput, type DailyChartDataPoint, type WeeklyAverageDataPoint, type MonthlyInsightEntry, type Recommendation } from '@/ai/flows/progress-report-generator';
+import { generateProgressReport, type ProgressReportGeneratorInput, type ProgressReportGeneratorOutput } from '@/ai/flows/progress-report-generator';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock historical data generator
-const createMockIntakeResponse = (date: Date, baseScores: {sadness: number, anxiety: number, stress: number, hopefulness: number, sleep: number}) => {
-  const randomFluctuation = (base: number, range: number = 2) => Math.max(1, Math.min(10, Math.round(base + (Math.random() * range * 2) - range)));
-  const anxietyOptions: ("Never" | "Rarely" | "Sometimes" | "Often" | "Always")[] = ["Never", "Rarely", "Sometimes", "Often", "Always"];
-  const sleepOptions: ("Less than 4" | "4-6" | "6-8" | "More than 8")[] = ["Less than 4", "4-6", "6-8", "More than 8"];
-  
-  return {
-    timestamp: date.toISOString(),
-    responses: {
-      q1_sadnessLevel: randomFluctuation(baseScores.sadness),
-      q2_anxietyFrequency: anxietyOptions[Math.min(anxietyOptions.length - 1, Math.max(0, Math.round(randomFluctuation(baseScores.anxiety, 1.5) / 2) -1))], // Map 1-5 to index 0-4
-      q5_stressLevel: randomFluctuation(baseScores.stress),
-      q6_sleepHours: sleepOptions[Math.min(sleepOptions.length - 1, Math.max(0, Math.round(randomFluctuation(baseScores.sleep, 1) / 2.5) -1 ))], // Map ~1-4 to index 0-3
-      q17_hopefulness: randomFluctuation(baseScores.hopefulness),
-    }
-  };
-};
+// Interface for the raw intake data stored in localStorage
+// This should align with parts of IntakeFormValues from intake/page.tsx
+interface StoredIntakeData {
+  updatedAt: string; // ISO string, will be used as timestamp
+  sadnessFrequencyWeekly?: number;
+  panicAttackFrequency?: "Never" | "Rarely" | "Sometimes" | "Often" | "Always";
+  currentWorryIntensity?: number;
+  averageSleepHoursNightly?: "Less than 4" | "4-6" | "6-8" | "More than 8";
+  hopefulnessFuture?: number;
+  // Add any other fields from intake form that might be relevant if the AI flow expects them
+  // For now, focusing on the keys explicitly used by progress-report-generator's IntakeResponseItemSchema
+}
 
-const generateMockHistory = (numEntries: number = 20): ProgressReportGeneratorInput['history'] => {
-  const history: ProgressReportGeneratorInput['history'] = [];
-  let currentDate = new Date();
-  const baseScores = {sadness: 5, anxiety: 6, stress: 7, hopefulness: 5, sleep: 2}; // sleep score based on options index
-
-  for (let i = 0; i < numEntries; i++) {
-    history.push(createMockIntakeResponse(currentDate, baseScores));
-    currentDate = subDays(currentDate, Math.floor(Math.random() * 3) + 1); // 1-3 days apart
-    // Slightly drift base scores over time for some trend
-    if (i % 5 === 0 && i > 0) {
-        baseScores.sadness = Math.max(1, baseScores.sadness - (Math.random() > 0.5 ? 1: -0.5));
-        baseScores.stress = Math.max(1, baseScores.stress - (Math.random() > 0.5 ? 1: -0.5));
-        baseScores.hopefulness = Math.min(10, baseScores.hopefulness + (Math.random() > 0.5 ? 1: -0.5));
-    }
-  }
-  return history.reverse(); // Oldest first
-};
-
+const INTAKE_DATA_LS_KEY = 'wellspringUserIntakeData';
 
 export default function MyProgressPage() {
   const [reportData, setReportData] = useState<ProgressReportGeneratorOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noIntakeData, setNoIntakeData] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchReport = async () => {
       setIsLoading(true);
       setError(null);
-      try {
-        // For demonstration, using mock historical data.
-        // In a real app, this data would be fetched from a persistent store (e.g., Firestore history or localStorage list)
-        const mockHistoricalIntake: ProgressReportGeneratorInput = {
-          userId: "mockUser123",
-          history: generateMockHistory(30), // Generate 30 mock entries for more data
-        };
+      setNoIntakeData(false);
 
-        if (mockHistoricalIntake.history.length === 0) {
-             toast({
-                title: "No Data for Report",
-                description: "There's no historical intake data to generate a progress report. Please complete the intake form regularly.",
-                variant: "default"
-            });
-            setReportData(null);
-            setIsLoading(false);
-            return;
+      try {
+        const storedIntakeString = localStorage.getItem(INTAKE_DATA_LS_KEY);
+        if (!storedIntakeString) {
+          setNoIntakeData(true);
+          setIsLoading(false);
+          return;
         }
+
+        const latestIntake: StoredIntakeData = JSON.parse(storedIntakeString);
+
+        // Transform the single intake data into the history format expected by the AI flow
+        const transformedHistoryEntry = {
+          timestamp: latestIntake.updatedAt || new Date().toISOString(),
+          responses: {
+            q1_sadnessLevel: latestIntake.sadnessFrequencyWeekly || 0, // Default to 0 if undefined
+            q2_anxietyFrequency: latestIntake.panicAttackFrequency || "Never",
+            q5_stressLevel: latestIntake.currentWorryIntensity || 0,
+            q6_sleepHours: latestIntake.averageSleepHoursNightly || "Less than 4",
+            q17_hopefulness: latestIntake.hopefulnessFuture || 0,
+          }
+        };
         
-        const result = await generateProgressReport(mockHistoricalIntake);
+        const reportInput: ProgressReportGeneratorInput = {
+          userId: "currentUser123", // Replace with actual user ID if available
+          history: [transformedHistoryEntry],
+        };
+        
+        const result = await generateProgressReport(reportInput);
         setReportData(result);
 
       } catch (e: any) {
@@ -139,7 +128,19 @@ export default function MyProgressPage() {
         </Card>
       )}
 
-      {error && !isLoading && (
+      {noIntakeData && !isLoading && (
+         <Card className="shadow-lg">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Info className="text-primary h-6 w-6"/>Complete Your Intake Form</CardTitle></CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">Please complete your intake form to generate your initial progress report and enable personalized insights.</p>
+                <Button asChild variant="link" className="p-0 h-auto mt-2">
+                    <Link href="/dashboard/intake">Go to Intake Form</Link>
+                </Button>
+            </CardContent>
+        </Card>
+      )}
+
+      {error && !isLoading && !noIntakeData && (
          <Card className="shadow-lg border-destructive">
             <CardHeader><CardTitle className="text-destructive flex items-center gap-2"><AlertTriangle/>Error Loading Report</CardTitle></CardHeader>
             <CardContent>
@@ -149,57 +150,60 @@ export default function MyProgressPage() {
         </Card>
       )}
 
-      {!isLoading && !error && !reportData?.dailyChartData?.length && (
-         <Card className="shadow-lg">
-            <CardHeader><CardTitle className="flex items-center gap-2"><Info className="text-primary h-6 w-6"/>Not Enough Data</CardTitle></CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">There isn't enough historical data to generate a detailed progress report yet. Please complete the intake form a few times over the coming days/weeks.</p>
-                <Button asChild variant="link" className="p-0 h-auto mt-2">
-                    <Link href="/dashboard/intake">Go to Intake Form</Link>
-                </Button>
-            </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && !error && reportData && reportData.dailyChartData && reportData.dailyChartData.length > 0 && (
+      {!isLoading && !error && !noIntakeData && reportData && reportData.dailyChartData && (
         <>
           <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2"><TrendingUp className="text-primary h-6 w-6"/>Progress Summary</CardTitle>
-                <CardDescription>{reportData.summary || "No summary available."}</CardDescription>
+                <CardDescription>{reportData.summary || "A summary of your progress will appear here once more data is available."}</CardDescription>
             </CardHeader>
+             {reportData.dailyChartData.length <= 1 && (
+                <CardContent>
+                    <div className="p-3 mb-2 border border-blue-200 bg-blue-50 rounded-md text-xs text-blue-700 flex items-start gap-2">
+                        <Info className="h-4 w-4 flex-shrink-0 mt-0.5"/>
+                        <span>This report is based on your latest intake. More detailed trends and insights will become available as you complete more check-ins or update your intake over time.</span>
+                    </div>
+                </CardContent>
+            )}
           </Card>
 
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2"><CalendarClock className="text-primary h-6 w-6"/>Daily Trends (Last 7 Entries)</CardTitle>
-              <CardDescription>Your key wellness indicators over the recent period.</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ReLineChart data={reportData.dailyChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))"/>
-                  <XAxis dataKey="date" tickFormatter={(value) => format(parseISO(value), 'MMM d')} 
-                         tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}}/>
-                  <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} domain={[0, 10]}/>
-                  <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} domain={[0, 5]} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{fontSize: "12px"}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="stress" stroke="hsl(var(--primary))" strokeWidth={2} name="Stress (1-10)" dot={{r:3}} activeDot={{r:5}}/>
-                  <Line yAxisId="right" type="monotone" dataKey="sleep" stroke="hsl(var(--chart-2))" strokeWidth={2} name="Sleep Score (1-4)" dot={{r:3}} activeDot={{r:5}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="sadness" stroke="hsl(var(--chart-3))" strokeWidth={2} name="Sadness (1-10)" dot={{r:3}} activeDot={{r:5}}/>
-                  <Line yAxisId="left" type="monotone" dataKey="hopefulness" stroke="hsl(var(--chart-4))" strokeWidth={2} name="Hopefulness (1-10)" dot={{r:3}} activeDot={{r:5}}/>
-                   <Line yAxisId="right" type="monotone" dataKey="anxiety" stroke="hsl(var(--chart-5))" strokeWidth={2} name="Anxiety Score (1-5)" dot={{r:3}} activeDot={{r:5}}/>
-                </ReLineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {reportData.dailyChartData.length > 0 ? (
+            <Card className="shadow-lg">
+                <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2"><CalendarClock className="text-primary h-6 w-6"/>Daily Indicators (from last intake)</CardTitle>
+                <CardDescription>Key wellness indicators based on your most recent intake submission.</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ReLineChart data={reportData.dailyChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))"/>
+                    <XAxis dataKey="date" tickFormatter={(value) => format(parseISO(value), 'MMM d')} 
+                            tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}}/>
+                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} domain={[0, 10]}/>
+                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} domain={[0, 5]} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{fontSize: "12px"}}/>
+                    <Line yAxisId="left" type="monotone" dataKey="stress" stroke="hsl(var(--chart-1))" strokeWidth={2} name="Stress (1-10)" dot={{r:3}} activeDot={{r:5}}/>
+                    <Line yAxisId="right" type="monotone" dataKey="sleep" stroke="hsl(var(--chart-2))" strokeWidth={2} name="Sleep Score (1-4)" dot={{r:3}} activeDot={{r:5}}/>
+                    <Line yAxisId="left" type="monotone" dataKey="sadness" stroke="hsl(var(--chart-3))" strokeWidth={2} name="Sadness (1-10)" dot={{r:3}} activeDot={{r:5}}/>
+                    <Line yAxisId="left" type="monotone" dataKey="hopefulness" stroke="hsl(var(--chart-4))" strokeWidth={2} name="Hopefulness (1-10)" dot={{r:3}} activeDot={{r:5}}/>
+                    <Line yAxisId="right" type="monotone" dataKey="anxiety" stroke="hsl(var(--chart-5))" strokeWidth={2} name="Anxiety Score (1-5)" dot={{r:3}} activeDot={{r:5}}/>
+                    </ReLineChart>
+                </ResponsiveContainer>
+                </CardContent>
+            </Card>
+          ) : (
+            <Card className="shadow-lg">
+                <CardHeader><CardTitle className="text-xl flex items-center gap-2"><CalendarClock className="text-primary h-6 w-6"/>Daily Indicators</CardTitle></CardHeader>
+                <CardContent><p className="text-muted-foreground">No daily data available from the report.</p></CardContent>
+            </Card>
+          )}
           
            {reportData.weeklyAverages && reportData.weeklyAverages.length > 0 && (
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2"><BarChart className="text-primary h-6 w-6"/>Weekly Averages (Last 4 Weeks)</CardTitle>
-                <CardDescription>Average wellness indicators on a weekly basis.</CardDescription>
+                <CardTitle className="text-xl flex items-center gap-2"><BarChartIcon className="text-primary h-6 w-6"/>Weekly Averages</CardTitle>
+                <CardDescription>Average wellness indicators. (Will show more detail with historical data)</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -227,7 +231,7 @@ export default function MyProgressPage() {
             <Card className="shadow-md">
                 <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2"><Activity className="text-primary h-6 w-6"/>Monthly Overview</CardTitle>
-                <CardDescription>Summary of trends over the past months.</CardDescription>
+                <CardDescription>Summary of trends. (Will show more detail with historical data)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {reportData.monthlyInsights.map((insight, index) => (
@@ -317,5 +321,3 @@ export default function MyProgressPage() {
     </div>
   );
 }
-
-    
