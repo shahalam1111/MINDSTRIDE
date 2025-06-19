@@ -91,12 +91,12 @@ export type InitialIntakeAnalyzerInput = z.infer<typeof InitialIntakeAnalyzerInp
 const MentalHealthConcernSchema = z.object({
   condition: z.string().describe("Identified mental health condition or concern (e.g., Depression, Anxiety, Stress)."),
   severity: z.enum(["Low", "Moderate", "High"]).describe("Assigned severity level for the concern."),
-  details: z.string().describe("Brief explanation or supporting details for the identified concern and its severity, based on user responses."),
+  details: z.string().describe("Brief explanation or supporting details (1-2 sentences max) for the identified concern and its severity, based on user responses."),
 });
 
 const RecommendationSchema = z.object({
   type: z.enum(["Immediate", "Lifestyle", "Long-term"]).describe("Category of the recommendation."),
-  action: z.string().describe("Specific, actionable recommendation tailored to the user."),
+  action: z.string().describe("Specific, actionable recommendation (1-2 sentences max) tailored to the user."),
 });
 
 const MoodTrendDataPointSchema = z.object({
@@ -108,7 +108,7 @@ const MoodTrendDataPointSchema = z.object({
 
 const MoodTrendSchema = z.object({
   pastWeek: z.array(MoodTrendDataPointSchema).describe("Array of mood data points from the past week if available."),
-  summary: z.string().describe("A brief textual summary of observed mood trends or 'No historical data available.' if pastResponses is empty/missing."),
+  summary: z.string().describe("A brief textual summary (1-2 sentences max) of observed mood trends or 'No historical data available.' if pastResponses is empty/missing."),
 });
 
 const AnalyticsSchema = z.object({
@@ -165,7 +165,8 @@ You are an AI mental health assistant tasked with analyzing user responses from 
    - "sleepQuality": Categorize based on q6_sleepHours (e.g., "Less than 4" -> "Poor", "4-6" -> "Fair", "6-8" -> "Good", "More than 8" -> "Good/Excessive").
    - "socialEngagement": Categorize based on q8_socialAvoidance and q19_supportSystem (e.g., "Low", "Moderate", "High").
 6. The output MUST be a single, valid JSON object adhering to the provided Output Format. Ensure "userId" and "timestamp" from the input are copied to the output. Generate a "reportId" (e.g., "report_YYYYMMDD_HHMMSS_userId").
-7. Do not include any non-JSON text, explanations, apologies, or conversational filler before or after the JSON output.
+7. **Conciseness**: Keep explanations and details for "mentalHealthConcerns" and "recommendations" very brief (1-2 sentences maximum per item). Avoid verbose language and do not repeat information. Focus only on essential insights and scores.
+8. Do not include any non-JSON text, explanations, apologies, or conversational filler before or after the JSON output.
 
 The user's full input is:
 \`\`\`json
@@ -187,7 +188,8 @@ const analyzeInitialIntakeFlow = ai.defineFlow(
         output: { schema: InitialIntakeAnalyzerOutputSchema },
         config: {
           temperature: 0.3,
-          maxOutputTokens: 2048,
+          topP: 0.8,
+          maxOutputTokens: 1024, // Adjusted max tokens
           // Example safety setting, uncomment and adjust if needed:
           // safetySettings: [{ category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }] 
         }
